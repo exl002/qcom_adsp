@@ -6,7 +6,7 @@
 OUTPUT_FORMAT("elf32-littleqdsp6",
               "elf32-bigqdsp6",
 	      "elf32-littleqdsp6")
-OUTPUT_ARCH(qdsp6)
+OUTPUT_ARCH(hexagon)
 ENTRY(start)
 SEARCH_DIR("/prj/dsp/qdsp6/austin/builds/hexbuild/branch-3.0/hexframe/16759/linux64/install/BT_201108251930_lnx64/gnu/qdsp6/lib");
   
