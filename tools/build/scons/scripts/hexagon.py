@@ -338,6 +338,8 @@ def generate(env):
       hexagon_ver = 5
       env.PrintWarning("Cannot decode HEXAGON version default to 5!")
 
+   hexagon_version = hexagon_ver
+
    #===============================================================================
    # Special init to setup cygwin and change text formatting
    #===============================================================================
@@ -519,6 +521,9 @@ def generate(env):
    
    # if env['platform'] == 'windows':
 
+   if hexagon_rtos_release == "6.4.06.a":
+     hexagon_ver = 5
+
    # HEXAGON set ANSI C compiler
    #import pdb; pdb.set_trace()
    if hexagon_ver >= 6:
@@ -578,6 +583,8 @@ def generate(env):
    else:
       env.Replace(OBJCOPY = QDSP6BIN + "qdsp6-objcopy${EXE_EXT}")
 
+   hexagon_ver = hexagon_version
+      
    # Preprocess assembly cleaner
    env.Replace(PPASM_FILE = env.RealPath("${BUILD_SCRIPTS_ROOT}/ppasm.py"))   
    env.Replace(PPASM = "${PYTHONCMD} ${PPASM_FILE}")  
