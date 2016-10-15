@@ -159,20 +159,25 @@ if [ "$unamestr" = "Linux" ]; then
      rm -f __temp.out
    }
 
-   ARM_COMPILER_PATH=/pkg/qct/software/arm/RVDS/2.2BLD593/RVCT/Programs/2.2/593/linux-pentium
-   #PYTHON_PATH=/pkg/qct/software/python/2.6.4/bin
-   MAKE_PATH=/pkg/gnu/make/3.81/bin
-   export ARMTOOLS=RVCT221
-   export ARMROOT=/pkg/qct/software/arm/RVDS/2.2BLD593
-   export ARMLIB=$ARMROOT/RVCT/Data/2.2/349/lib
-   export ARMINCLUDE=$ARMROOT/RVCT/Data/2.2/349/include/unix
-   export ARMINC=$ARMINCLUDE
-   export ARMCONF=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
-   export ARMDLL=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
-   export ARMBIN=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
-   export PATH=$MAKE_PATH:$ARM_COMPILER_PATH:$PATH
-   export ARMHOME=$ARMROOT
-   export_armlmd_license
+   # Call script to setup build environment, if it exists.
+   if [ -e setenv.sh ]; then
+     . setenv.sh
+   else 
+     ARM_COMPILER_PATH=/pkg/qct/software/arm/RVDS/2.2BLD593/RVCT/Programs/2.2/593/linux-pentium
+     #PYTHON_PATH=/pkg/qct/software/python/2.6.4/bin
+     MAKE_PATH=/pkg/gnu/make/3.81/bin
+     export ARMTOOLS=RVCT221
+     export ARMROOT=/pkg/qct/software/arm/RVDS/2.2BLD593
+     export ARMLIB=$ARMROOT/RVCT/Data/2.2/349/lib
+     export ARMINCLUDE=$ARMROOT/RVCT/Data/2.2/349/include/unix
+     export ARMINC=$ARMINCLUDE
+     export ARMCONF=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
+     export ARMDLL=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
+     export ARMBIN=$ARMROOT/RVCT/Programs/2.2/593/linux-pentium
+     export PATH=$MAKE_PATH:$ARM_COMPILER_PATH:$PATH
+     export ARMHOME=$ARMROOT
+     export_armlmd_license
+   fi
 
    # Hexagon Setup
    if [ $HEXAGON_ROOT ]; then
