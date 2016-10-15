@@ -1438,7 +1438,7 @@ void mem_deinit_heap(
    ret_value = osal_delete_crit_sect((osal_crit_sect_t*)&(heap_ptr->memheap_crit_sect));
    MEMHEAP_ASSERT(ret_value == OSAL_SUCCESS );
    memset(&(heap_ptr->memheap_crit_sect),0,sizeof(osal_crit_sect_t));
-   memset(heap_ptr, 0, sizeof(heap_ptr));
+   memset(heap_ptr, 0, sizeof(*heap_ptr));
  }
  else
  {
