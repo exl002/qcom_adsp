@@ -41,7 +41,6 @@ INCLUDE FILES FOR MODULE
 #include "qurt_elite_mutex.h"
 
 #ifdef __cplusplus
-#include <new>
 extern "C" {
 #endif //__cplusplus
 

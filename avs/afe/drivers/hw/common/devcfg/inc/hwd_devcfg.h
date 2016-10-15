@@ -3,7 +3,6 @@
 #define HWDDEVCFG_H
 
 #ifdef __cplusplus
-#include <new>
 extern "C" {
 #endif //__cplusplus
 
