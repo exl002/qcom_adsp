@@ -1,0 +1,89 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+if not 'USES_PLATFORM_MINIMAL' in env:
+   platform_root = '${BUILD_ROOT}/platform'
+   env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+   env.RequirePublicApi([
+      'ACF',
+      'DLW',
+      'HAPSDK',
+      'APPS_STD',
+      'PLATFORM_LIBS',
+      'STDDEF',
+      'UTILS',
+      'A1STD',
+      'REMOTE',
+      'MOD_TABLE',
+      'APPS_STD',
+     ])
+
+   env.RequireRestrictedApi([
+      'SECURITY',
+      'SECURITY_TESTS',
+      'ATOMIC',
+      ])
+
+   core_public_apis = [
+      'DEBUGTOOLS',
+      'SERVICES',
+      'KERNEL',
+      ]
+
+   env.PublishPrivateApi('PLATFORM',[
+       '../skels',
+      ])
+
+   env.RequirePublicApi(core_public_apis, area='core')
+   #-------------------------------------------------------------------------------
+   # Source PATH
+   #-------------------------------------------------------------------------------
+   SRCPATH = "${ADSP_PLATFORM_ROOT}/security_tests"
+   env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+   env.PublishPrivateApi('SECURITY_TESTS', "${BUILD_ROOT}/platform/security_tests")
+   env.RequirePrivateApi('SECURITY_TESTS')
+
+   # Register as static library
+   # FASTRPC is disabled for SIM build
+   if 'USES_AVS_TEST' not in env:
+     env.PLRegister("security_tests")
+
+
+   SECURITY_TESTS_SOURCES =  [
+      env.AddQaicHeaderDep('${BUILDPATH}/securitytests_dsp.c', "apps_std"),
+      env.QaicSkelFromIdl("securitytests"),
+      ]
+
+   #-------------------------------------------------------------------------------
+   # Add Libraries to image
+   #-------------------------------------------------------------------------------
+   security_tests_lib = env.AddBinaryLibrary(
+      [
+         'SINGLE_IMAGE',
+         'CBSP_SINGLE_IMAGE',
+         'MODEM_IMAGE',
+         'CBSP_MODEM_IMAGE',
+         'QDSP6_SW_IMAGE',
+         'CBSP_QDSP6_SW_IMAGE'
+      ],
+      '${BUILDPATH}/security_tests',
+      SECURITY_TESTS_SOURCES)
+
+   #-------------------------------------------------------------------------------
+   # Load Subunits (sys)
+   #-------------------------------------------------------------------------------
+   env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.h', '*.S', '*.c', '*.cpp'], '${ADSP_PLATFORM_ROOT}/security_tests'))
+for x in env.FindFiles(['*.c', '*.cpp'], '${ADSP_PLATFORM_ROOT}/security_tests/build'):
+   CLEAN_LIST.remove(x)
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)

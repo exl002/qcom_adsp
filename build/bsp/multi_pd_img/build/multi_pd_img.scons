@@ -1,0 +1,245 @@
+#===============================================================================
+#
+# Target-Level Build Script for Modem Processor
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspbuild.adsp/2.2/bsp/multi_pd_img/build/multi_pd_img.scons#25 $
+#  $DateTime: 2014/02/20 21:27:30 $
+#  $Change: 5318659 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+import sys
+import os
+Import('env')
+
+env = env.Clone()
+
+
+#------------------------------------------------------------------------------
+# Check if we need to load this script or just bail-out
+#------------------------------------------------------------------------------
+# alias first alias is always the target then the other possibles
+
+aliases = ['multi_pd_img', 'adsp_mpd_images', 'adsp_mpd_core_images', 
+           'msm8974_MPD', 'mdm9x25_MPD', 'msm8x26_MPD', 'msm8x10_MPD', 'apq8084_MPD', 'msm8962_MPD',
+		   'msm8974_hcbsp_MPD', 'mdm9x25_hcbsp_MPD', 'msm8x26_hcbsp_MPD', 'msm8x10_hcbsp_MPD'
+          ] #multi_pd_img is just for debugging the final stage of multi pd
+
+# init environment variables
+boot_img_name="bootimage_relocflag"
+boot_img_name_non_reloc="bootimage_nonrelocflag"
+
+env.InitImageVars(
+   alias_list=aliases,           # aliases
+   proc='qdsp6',              # proc
+   config='adsp',                # config type, proc_name
+   plat='qurt',
+   target=boot_img_name,# target (elf, image file name)
+   tools = [	'${BUILD_ROOT}/tools/build/scons/gensecimage/gensecimage_builder.py',
+				'${BUILD_ROOT}/core/bsp/build/scripts/mbn_builder.py',
+				'${BUILD_ROOT}/qdsp6/tools/qurt_mpd_image_builder.py']
+   )
+
+if not env.CheckAlias(alias_list=aliases):
+   Return()
+
+#---------------------------------------------------------------------------
+# Load in CBSP uses and path variables
+#---------------------------------------------------------------------------
+env.InitBuildConfig()
+
+#---------------------------------------------------------------------------
+# Load in the tools scripts
+#---------------------------------------------------------------------------
+env.Replace(QDSP6_LIBDIR = "${COREBSP_ROOT}/kernel/qurt/install_again/ADSPv5MP/lib")
+#this is the path for kernel to be used in multi PD build
+env.Replace(QDSP6_QURT_TOOLDIR = "${COREBSP_ROOT}/kernel/qurt/install_again/ADSPv5MP/scripts")
+
+env.LoadToolScript('hexagon_adsp', toolpath = ['${BUILD_ROOT}/qdsp6/tools'])
+if 'AddDummySegBuilder' not in env.get('BUILDERS'):
+    env.LoadToolScript('kernel_builders', toolpath=['${COREBSP_ROOT}/bsp/build/scripts'])
+
+
+if env.get('CHIPSET') == "msm8x10":
+   env.Replace(QDSP6_MPD_PHYS_ADDR = "0X0BF00000")
+elif env.get('CHIPSET') == "mdm9x25":
+   env.Replace(QDSP6_MPD_PHYS_ADDR = "0X01300000")
+else:
+   env.Replace(QDSP6_MPD_PHYS_ADDR = "0X0DC00000")
+
+#pass this flag thru build\ms\build.cmd USES_FLAGS=USES_GENSECIMAGE
+#instead of hardcodeding in the scripts
+#env.AddUsesFlags(['USES_GENSECIMAGE'])
+#---------------------------------------------------------------------------
+# Load in the tools scripts
+#---------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------------------------------------------------
+# !! Note regarding Audio in User PD 
+#Currently Audio is not in user pd. if at all it needs to be in User pd, enable the target scons for audio pd under build\bsp 
+#and also add an env variable AUDIO_IN_USERPD, this will immediately enable adding audio user pd 
+#env.Replace(AUDIO_IN_USERPD = 'no')
+#-----------------------------------------------------------------------------------------------------------------------
+
+target_images = []
+build_ms_targets = []
+target_images_non_reloc = []
+build_ms_targets_non_reloc = []
+
+#output of multipd weaver
+boot_img=env.RealPath('${SHORT_BUILDPATH}/bootimage.pbn')
+
+output_boot_img_name=env.RealPath('${BUILD_MS_ROOT}/'+boot_img_name+'.pbn')
+target_images.extend([boot_img])
+
+# for non reloc output
+output_boot_img_name_non_reloc=env.RealPath('${BUILD_MS_ROOT}/'+boot_img_name_non_reloc+'.pbn')
+
+
+#USES_FLAG "RESIGN_DEVCFG" is added to support to re-stitch a relocatable image once they are directly modified by 
+# device config tool(reverse_propgen.py). In this case the relocatable image exist and doesnt need to be build again.
+# This logic is controlled by "RESIGN_DEVCFG" flag.  
+
+guest_img='${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}.elf'
+sensor_img='${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR.elf'
+audio_img='${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO.elf'
+
+if('RESIGN_DEVCFG' not in  env.get('USES_FLAGS')):  
+   #input to this scons
+   guest_img_pre_reloc=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_pre_reloc.elf')
+   audio_img_pre_reloc=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO_pre_reloc.elf')
+   sensor_img_pre_reloc=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR_pre_reloc.elf')
+     
+   guest_img=env.InstallAs('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}.elf', guest_img_pre_reloc)
+   sensor_img=env.InstallAs('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR.elf',sensor_img_pre_reloc)
+   audio_img=env.InstallAs('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO.elf',audio_img_pre_reloc)
+
+#call multi pd weaver to generate relocated elf and final pbn
+if 'AUDIO_IN_USERPD' in env:
+  if env.get('CHIPSET') == "msm8x10" or env.get('CHIPSET') == "mdm9x25":
+      output_boot_img=env.ImageBuild(target_images,[guest_img,audio_img,env.subst("${COREBSP_ROOT}/kernel/qurt/kernel/scripts/qurt-image-build.py")], PHYS_ADDR='${QDSP6_MPD_PHYS_ADDR}')
+  else:
+      output_boot_img=env.ImageBuild(target_images,[guest_img,sensor_img,audio_img,env.subst("${COREBSP_ROOT}/kernel/qurt/kernel/scripts/qurt-image-build.py")], PHYS_ADDR='${QDSP6_MPD_PHYS_ADDR}')
+else:
+  if env.get('CHIPSET') == "msm8x10" or env.get('CHIPSET') == "mdm9x25":
+     output_boot_img=env.ImageBuild(target_images,[guest_img,env.subst("${COREBSP_ROOT}/kernel/qurt/kernel/scripts/qurt-image-build.py")], PHYS_ADDR='${QDSP6_MPD_PHYS_ADDR}')
+  else:
+     output_boot_img=env.ImageBuild(target_images,[guest_img,sensor_img,env.subst("${COREBSP_ROOT}/kernel/qurt/kernel/scripts/qurt-image-build.py")], PHYS_ADDR='${QDSP6_MPD_PHYS_ADDR}')
+
+
+#call ModifyRelocatableFlag after qurt image builder for both Relocatable & Non-Relocatable
+build_ms_targets = env.ModifyRelocatableFlagsBuilder(output_boot_img_name, output_boot_img[0])
+build_ms_targets_non_reloc = env.InstallAs(output_boot_img_name_non_reloc, output_boot_img[0])
+
+#-------------------------------------------------------------------------
+# Add a dummy segment for dynamic footprints
+#-------------------------------------------------------------------------
+if env.get('CHIPSET') == "mdm9x25":
+    build_ms_targets_stage2 = build_ms_targets
+    build_ms_targets_non_reloc_stage2 = build_ms_targets_non_reloc
+else:
+    
+    build_ms_targets_stage2 = env.AddDummySegBuilder("${BUILD_MS_ROOT}/bootimage_relocflag_withdummyseg.pbn", [build_ms_targets, "${BUILD_ROOT}/build/chipset/${CHIPSET}/qdsp6.xml"])     
+    build_ms_targets_non_reloc_stage2 = env.AddDummySegBuilder("${BUILD_MS_ROOT}/bootimage_nonrelocflag_withdummyseg.pbn", [build_ms_targets_non_reloc, "${BUILD_ROOT}/build/chipset/${CHIPSET}/qdsp6.xml"])
+
+#generate mbn out of the pbn for both Relocatable & Non-Relocatable
+multipd_mbn = env.MbnBuilder("adsp", build_ms_targets_stage2, IMAGE_TYPE="qdsp6sw", ENABLE_RELOCATABLE=True, FLASH_TYPE=env['TARGET_FLASH_TYPE'])
+multipd_mbn_non_reloc = env.MbnBuilder("adsp_non_reloc", build_ms_targets_non_reloc_stage2, IMAGE_TYPE="qdsp6sw", FLASH_TYPE=env['TARGET_FLASH_TYPE'])
+
+#----------------------------------------------------------------------------
+# Gensecimage signing 
+#----------------------------------------------------------------------------    
+#section name should be the same as defined in gensecimage.cfg.template file
+#is it required to be "qdsp6sw", or image owner could defined it, ex "adspmpd"
+gensecimage_section = "adsp"
+
+# gensecimage is turned on when USES_GENSECIMAGE is defined and . 
+# the legacy USES_SECBOOT and USES_ENCRYPT_MBN are not defined
+# Use gensecimage_jtagid = ['0x12345678'] if the gensecimage_msmid is not supported 
+# BUILD_ASIC is used to check, since common binary, for 8x26 MSM_ID and CHIPSET is set to aglined with 8974; BUILD_ASIC is set as what the actual chipset is
+if env['BUILD_ASIC'] in ['8x10']:
+  gensecimage_msmid = ['8612','8610']
+elif env['BUILD_ASIC'] in ['8x26']:
+  gensecimage_msmid = ['8626','8926']  
+else:
+  gensecimage_msmid = env.subst('${MSM_ID}')  
+
+
+signed_mbn = env.GensecimageMbnBuilder(
+                 target_base_dir = '${SHORT_BUILDPATH}/signed/',
+                 source=multipd_mbn,                   
+                 gensecimage_section = gensecimage_section, 
+                 gensecimage_msmid = gensecimage_msmid,
+                 )                          
+# Installation
+install_signed_mbn = env.GensecimageInstall(
+                 install_base_dir = '${MBN_ROOT}/signed/',
+                 install_sub_dir = gensecimage_msmid,
+                 install_file_name = 'adsp.mbn',
+                 gensecimage_builder_output = signed_mbn)    
+   
+#install target elf
+if 'USES_GENSECIMAGE' in env:
+   target_elf = env.InstallAs('${BUILD_ROOT}/dsp.elf', install_signed_mbn[0][0])
+   target_elf_zip = env.InstallAs('${BUILD_ROOT}/cert/dsp.zip', install_signed_mbn[0][1])
+   obj_mbn_zip = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/cert/adsp.zip', target_elf_zip)
+else:   
+   target_elf = env.InstallAs('${BUILD_ROOT}/dsp.elf', multipd_mbn)
+
+obj_mbn1 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp1.mbn', target_elf)
+obj_mbn2 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp2.mbn', target_elf)
+obj_mbn3 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp3.mbn', target_elf)
+obj_mbn = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/adsp.mbn', target_elf)
+
+
+#install target elf non relocatable
+target_elf_non_reloc = env.InstallAs('${BUILD_ROOT}/dsp_non_reloc.elf', multipd_mbn_non_reloc)
+obj_mbn1_non_reloc = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/non_reloc/dsp1.mbn', target_elf_non_reloc)
+obj_mbn2_non_reloc = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/non_reloc/dsp2.mbn', target_elf_non_reloc)
+obj_mbn3_non_reloc = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/non_reloc/dsp3.mbn', target_elf_non_reloc)
+obj_mbn_non_reloc = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/non_reloc/adsp.mbn', target_elf_non_reloc)
+
+target_images.append(build_ms_targets)
+target_images.append(multipd_mbn)
+target_images.append(target_elf)
+target_images.append(obj_mbn1)
+target_images.append(obj_mbn2)
+target_images.append(obj_mbn3)
+target_images.append(obj_mbn)
+
+# for non-relocatable image
+target_images_non_reloc.append(build_ms_targets_non_reloc)
+target_images_non_reloc.append(multipd_mbn_non_reloc)
+target_images_non_reloc.append(target_elf_non_reloc)
+target_images_non_reloc.append(obj_mbn1_non_reloc)
+target_images_non_reloc.append(obj_mbn2_non_reloc)
+target_images_non_reloc.append(obj_mbn3_non_reloc)
+target_images_non_reloc.append(obj_mbn_non_reloc)
+
+if 'USES_GENSECIMAGE' in env:   
+   target_images.append(install_signed_mbn)
+   target_images.append(obj_mbn_zip)
+   
+print FindFile('build.cmd', '${BUILD_MS_ROOT}')
+for alias in aliases:
+   env.Alias(alias, target_images)
+
+print FindFile('build.cmd', '${BUILD_MS_ROOT}')
+for alias in aliases:
+   env.Alias(alias, target_images_non_reloc)
+

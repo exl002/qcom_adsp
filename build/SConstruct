@@ -1,0 +1,109 @@
+#===============================================================================
+#                    Copyright 2009 QUALCOMM Incorporated.
+#                           All Rights Reserved.
+#                         QUALCOMM Proprietary/GTDR
+#===============================================================================
+import os
+import fnmatch
+import sys
+import utils
+
+# Add command line parameters for target, install directory and build directory
+
+AddOption('--chipset',
+          dest='chipset',
+          default='',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='CHIPSET',
+          help='Initialize chipset')
+
+AddOption('--build_version',
+          dest='build_version',
+          default='',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='BUILD_VERSION',
+          help='Initialize build version')
+
+AddOption('--build_flavor',
+          dest='build_flavor',
+          default='',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='BUILD_FLAVOR',
+          help='Initialize build flavor')
+
+AddOption('--build_act',
+          dest='build_act',
+          default='',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='BUILD_ACT',
+          help='Initialize build action')
+
+AddOption('--build_flags',
+          dest='build_flags',
+          default='',
+          type='string',
+          nargs=1,
+          action='store',
+          metavar='BUILD_FLAGS',
+          help='Initialize build flags')
+          
+
+if GetOption('help')==True:
+   print "\nUsage: \nscons ADSP" 
+   print "          --chipset=<CHIPSET>"
+   print "          --build_version=<BUILD_VERSION>"
+   print "          --build_flavor=<BUILD_FLAVOR>"
+   print "          --build_act=<BUILD_ACT>"
+   print "          --build_flags=<BUILD_FLAGS>"
+   sys.exit(0)
+
+env = DefaultEnvironment(CHIPSET       = GetOption('chipset'),
+                         BUILD_VERSION = GetOption('build_version'),
+                         BUILD_FLAVOR = GetOption('build_flavor'),
+                         BUILD_ACT = GetOption('build_act'),
+                         BUILD_FLAGS = GetOption('build_flags'),
+                         ADSP_PROC_ROOT = os.getcwd())   
+
+env = env.Clone()
+
+#Initialize utilities
+utils.Init(env)
+
+# Set Q6 Tools information
+# Set config flags
+#env.InitTarget()
+
+# Create Timestamp
+env.CreateTimestamp()
+
+# Set CHIPSET information   
+env.InitChipset()  
+
+# execute the build startup command   
+env.ExecuteBuildCmd()
+
+if env.subst('$BUILD_ACT') != 'SIM' and env.subst('$BUILD_ACT') != 'clean':   
+   # execute the split_proc command   
+   env.SplitProc()
+
+   #execute the memory_proc command
+   env.MemoryProc()
+   
+   #execute the hexagon_elf_extractor command
+   env.ElfExtractorProc()
+   
+if env.subst('$BUILD_FLAGS') == 'CHECKSIMBOOT' and env.subst('$BUILD_ACT') != 'clean':
+   #execute the pcm_check_sim command
+   env.CheckSimBoot()
+
+## Disable test_prelink for now
+#test_prelink = []
+#env.Alias('ADSP', [xxx, xxx, xxx, xxx])

@@ -1,0 +1,5 @@
+module apps {
+   interface console {
+      long print_string(in string str);
+   };
+};

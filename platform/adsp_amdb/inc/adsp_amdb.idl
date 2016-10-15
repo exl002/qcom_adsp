@@ -1,0 +1,68 @@
+//==============================================================================
+/// @file adsp_amdb_mgr.idl
+///
+                                                           //qidl copyright
+//% Copyright (c) 2012 QUALCOMM Incorporated.
+                                                           //qidl nested=false
+//% All Rights Reserved.
+//% Qualcomm Confidential and Proprietary
+//==============================================================================
+
+#include "AEEStdDef.idl"
+
+interface adsp_amdb {
+
+  /***************************************************************************** 
+    Add a dynamic CAPI module to the database
+   
+    id - module id
+    preload - true if the shared object should be loaded during the add process
+              false if the shared object should be loaded only when a module
+              is queried that requires it
+    filename_str - name of the shared object file (absolute path)
+    getsize_str - name of the module's getsize()
+    ctor_str - name of the module's ctor() function
+  *****************************************************************************/
+  long add_capi(in long id, in boolean preload, in string filename_str,
+                in string getsize_str, in string ctor_str);
+
+  /***************************************************************************** 
+    Add a dynamic APPI module to the database
+ 
+    id - module id
+    preload - true if the shared object should be loaded during the add process
+              false if the shared object should be loaded only when a module
+              is queried that requires it
+    filename_str - name of the shared object file (absolute path)
+    getsize_str - name of the module's getsize()
+    init_str - name of the module's init() function
+  *****************************************************************************/
+  long add_appi(in long id, in boolean preload, in string filename_str,
+                in string getsize_str, in string init_str);
+
+  /***************************************************************************** 
+    Remove an APPI or CAPI module from the database based on module ID.  if
+    filename_str is an empty string ("") then the module matching the id will
+    be removed.  Otherwise all the APPI or CAPI associated with the shared
+    object listed in filename_str will be removed.
+
+    id - module id
+    filename_str - name of the shared object, must not be NULL
+  *****************************************************************************/
+  long remove_capi(in long id, in string filename_str);
+  long remove_appi(in long id, in string filename_str);
+  
+  /***************************************************************************** 
+    Remove all CAPI or APPI modules from the database
+  *****************************************************************************/
+  long remove_all_capi();
+  long remove_all_appi();
+
+  /***************************************************************************** 
+    Print all CAPI or APPI modules via diagnostic messages
+  *****************************************************************************/
+  long print_all_capi();
+  long print_all_appi();
+
+};
+

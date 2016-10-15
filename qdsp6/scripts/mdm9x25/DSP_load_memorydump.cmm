@@ -1,0 +1,140 @@
+;****************************************************************
+; filename: DSP_timestamp_check.cmm
+;
+;****************************************************************
+LOCAL &ramdumpfile &smddumpfile
+LOCAL &ramdumpstartadd
+LOCAL &f3logpath &ulogpath
+LOCAL &ADSP_BUILDROOT
+entry &choice 
+
+TOOLBAR ON
+STATUSBAR ON
+
+ENTRY
+
+AREA.RESet
+WINPOS 0. 0. 100% 100%
+AREA.Create INTRMENU
+AREA.view INTRMENU
+
+;----------------------------------------------------------------------------
+; Set the desired CPU
+;----------------------------------------------------------------------------
+;sys.cpu HexagonV5H
+;sys.up
+
+pwd
+PRINT "Point to the Reference ADSP build root:"
+print " "
+print " "
+ENTER &ADSP_BUILDROOT
+cd &ADSP_BUILDROOT/adsp_proc
+pwd
+print " "
+
+print "PLEASE ENTER THE PATH INCLUDING THE RAMDUMP FILE NAME" 
+print " "
+print " "
+DIALOG.FILE *.*
+ENTRY &ramdumpfile
+
+print "PLEASE SELECT THE RAMDUMP FILE START ADDRESS:  (eg: 0x00000000)" 
+print " "
+print " "
+print "1.  if dump was saved manually, start address is: 0x02000000"
+print "2.  if dump was saved from QPST, start address is: 0x00000000"
+print " "
+print " "
+enter &choice
+if &choice==1
+(
+ &ramdumpstartadd=0x02000000
+)
+else if &choice==2
+(
+ &ramdumpstartadd=0x00000000
+)
+else
+(
+ print "unspported selection"
+)
+&choice=0
+
+print " "
+print "Enter the choice number. DO YOU HAVE THE RAM DUMP FOR SMD?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH INCLUDING THE SMD RAMDUMP FILE NAME" 
+print " "
+print " "
+DIALOG.FILE *.*
+ENTRY &smddumpfile
+)
+
+if &choice==1
+(
+do qdsp6\scripts\mdm9x25\DSP_connect_memdump.cmm &ramdumpfile &ramdumpstartadd 0x02000000 &smddumpfile 0x00000000
+)
+else
+(
+do qdsp6\scripts\mdm9x25\DSP_connect_memdump.cmm &ramdumpfile &ramdumpstartadd 0x02000000
+)
+
+do qdsp6\scripts\mdm9x25\analy_qurt_error.cmm
+
+&choice=0
+
+print " "
+print "Enter the choice number. Do you need F3 log?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH YOU WANT TO STORE THE F3 LOG" 
+print " "
+print " "
+enter &f3logpath
+do recover_f3.cmm &f3logpath
+)
+
+&choice=0
+
+print " "
+print "Enter the choice number. Do you need U-log?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH YOU WANT TO STORE THE U-LOG" 
+print " "
+print " "
+enter &ulogpath
+do core\power\ulog\scripts\ULogDump.cmm &ulogpath
+)
+
+print " "
+print " "
+print "DONE"
+print " "
+print " "

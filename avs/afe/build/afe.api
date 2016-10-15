@@ -1,0 +1,67 @@
+#===============================================================================
+#
+# AVS APIs
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+env.PublishRestrictedApi('AVS',[
+   '${INC_ROOT}/avs/afe/algos/dtmf_gen/inc',
+   '${INC_ROOT}/avs/afe/algos/aanc/inc',
+   '${INC_ROOT}/avs/afe/algos/ff_spkr_prot/inc',
+   '${INC_ROOT}/avs/afe/algos/fb_spkr_prot/inc',
+   '${INC_ROOT}/avs/afe/algos/common/inc',
+   '${INC_ROOT}/avs/afe/algos/rmc/inc',
+   '${INC_ROOT}/avs/afe/algos/swmad/inc',
+   '${INC_ROOT}/avs/afe/services/static/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/lpaif/dal/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/lpaif/hal/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/lpasshwio/hal/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/lpasshwio/hal/target/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/lpasshwio/devcfg/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/dml/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/dml/target/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/avtimer/avtimer_driver/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/avtimer/hal/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/avtimer/hal/target/tst',
+   '${INC_ROOT}/avs/afe/drivers/hw/resampler/rs_driver_ext/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/resampler/rs_driver/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/common/mmpm/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/audioif/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/spdif/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/slimbus/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/riva/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/rt_proxy/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/codec/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/vfr/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/dma_manager/inc',
+   '${INC_ROOT}/avs/afe/drivers/afe/hdmi_input/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/ssr/common/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/common/devcfg/inc',
+   ])  
+
+
+
+env.LoadAPIUnits()

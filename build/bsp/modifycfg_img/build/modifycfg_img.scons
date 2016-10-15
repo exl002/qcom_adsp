@@ -1,0 +1,153 @@
+#===============================================================================
+#
+# Target-Level Build Script for Modem Processor
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspbuild.adsp/2.2/bsp/modifycfg_img/build/modifycfg_img.scons#4 $
+#  $DateTime: 2013/07/26 15:03:10 $
+#  $Change: 4171534 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+import sys
+import os
+Import('env')
+
+env = env.Clone()
+
+#------------------------------------------------------------------------------
+# Check if we need to load this script or just bail-out
+#------------------------------------------------------------------------------
+# alias first alias is always the target then the other possibles
+aliases = ['modifycfg_img']
+
+# init environment variables
+boot_img_name="bootimage"
+
+env.InitImageVars(
+   alias_list=aliases,        # aliases
+   proc='qdsp6',              # proc
+   config='adsp',         # config type, proc_name
+   plat='qurt',
+   target=boot_img_name,   # target (elf, image file name)
+   tools = ['buildspec_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/mbn_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/qurt_mpd_image_builder.py']
+   )
+
+if not env.CheckAlias(alias_list=aliases):
+   Return()
+
+#------------------------------------------------------------------------------
+# Setting up export paths for access to elfparserutil.py
+#------------------------------------------------------------------------------
+corebsp_scripts_path = env.RealPath('${BUILD_ROOT}/core/bsp/build/scripts/')
+sys.path.append(corebsp_scripts_path)
+
+#------------------------------------------------------------------------------
+# Print banner
+#------------------------------------------------------------------------------
+env.InitBuildConfig()
+modifycfg_units = []
+#---------------------------------------------------------------------------
+# Load in the tools scripts
+#---------------------------------------------------------------------------
+env.LoadToolScript('hexagon_adsp', toolpath = ['${BUILD_ROOT}/qdsp6/tools'])
+env.LoadToolScript('qdsp6_defs_adsp', toolpath = ['${BUILD_ROOT}/build/ms'])
+
+#this is the path for kernel to be used in multi PD build
+env.Replace(QDSP6_QURT_TOOLDIR = "${COREBSP_ROOT}/kernel/qurt/install_again/ADSPv5MP/scripts")
+env.Replace(QDSP6_MPD_PHYS_ADDR = "0X0DC00000")
+
+#-----------------------------------------------------------------------------------------------------------------------
+# !! Note regarding Audio in User PD 
+#Currently Audio is not in user pd. if at all it needs to be in User pd, enable the target scons for audio pd under build\bsp 
+#and also add an env variable AUDIO_IN_USERPD, this will immediately enable adding audio user pd 
+#env.Replace(AUDIO_IN_USERPD = 'no')
+#-----------------------------------------------------------------------------------------------------------------------
+target_images = []
+build_ms_targets = []
+
+guest_img=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}.elf')
+
+# if its  a single PD
+if('SPD' in  env.get('USES_FLAGS')):
+   target_mbn = env.MbnBuilder('${TARGET_NAME}', elf_name, IMAGE_TYPE="qdsp6sw",
+   FLASH_TYPE=env['TARGET_FLASH_TYPE'])
+   print target_mbn   
+   env.Depends(target_mbn,elf_name)
+   target_images.append(target_mbn)  
+else:
+   # its a MPD
+   sensor_img=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR.elf')
+   audio_img=env.RealPath('${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO.elf')
+
+   #output of multipd weaver
+   boot_img=env.RealPath('${SHORT_BUILDPATH}/bootimage.pbn')
+   output_boot_img_name=env.RealPath('${BUILD_MS_ROOT}/'+boot_img_name+'.pbn')
+
+   #relocated ELFs
+   guest_img_reloc=env.RealPath('${SHORT_BUILDPATH}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_reloc.elf')
+   sensor_img_reloc=env.RealPath('${SHORT_BUILDPATH}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR_reloc.elf')
+   audio_img_reloc=env.RealPath('${SHORT_BUILDPATH}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO_reloc.elf')
+   if 'AUDIO_IN_USERPD' in env:
+     target_images.extend([boot_img,guest_img_reloc,sensor_img_reloc,audio_img_reloc])
+   else:
+     target_images.extend([boot_img,guest_img_reloc,sensor_img_reloc])
+     
+
+   #build ms path of the final output
+   if 'AUDIO_IN_USERPD' in env:
+     build_ms_targets.extend([output_boot_img_name,
+                           '${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_reloc.elf',
+                           '${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR_reloc.elf',
+                           '${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO_reloc.elf'
+                           ])
+   else:
+     build_ms_targets.extend([output_boot_img_name,
+                           '${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_reloc.elf',
+                           '${BUILD_MS_ROOT}/M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR_reloc.elf',
+                           ])
+
+   #call multi pd weaver to generate relocated elf and final pbn
+   if 'AUDIO_IN_USERPD' in env:
+     output_boot_img=env.MultiPDImageBuilder(target_images,[guest_img,sensor_img,audio_img])
+   else:
+     output_boot_img=env.MultiPDImageBuilder(target_images,[guest_img,sensor_img])
+
+   #generate mbn out of the final pbn
+   multipd_mbn = env.MbnBuilder("mpd", output_boot_img[0], IMAGE_TYPE="qdsp6sw",FLASH_TYPE=env['TARGET_FLASH_TYPE'])
+
+   #install target elf
+   target_elf = env.InstallAs('${BUILD_ROOT}/dsp.elf', multipd_mbn)
+   obj_mbn1 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp1.mbn', target_elf)
+   obj_mbn2 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp2.mbn', target_elf)
+   obj_mbn3 = env.InstallAs('${BUILD_ROOT}/obj/qdsp6v5_ReleaseG/dsp3.mbn', target_elf)
+
+   #install relocated elf and pbn in build/ms
+   InstalledMPD_Images=env.InstallAs(build_ms_targets,target_images)
+
+   target_images.append(build_ms_targets)
+   target_images.append(multipd_mbn)
+   target_images.append(target_elf)
+   target_images.append(obj_mbn1)
+   target_images.append(obj_mbn2)
+   target_images.append(obj_mbn3)
+
+print FindFile('build.cmd', '${BUILD_MS_ROOT}')
+for alias in aliases:
+   env.Alias(alias, target_images)

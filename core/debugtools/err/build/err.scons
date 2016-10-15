@@ -1,0 +1,192 @@
+#===============================================================================
+#
+# ERR Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/core/pkg/mpss/rel/1.0/modem_proc/core/debugtools/err/build/err.scons#1 $
+#  $DateTime: 2011/07/12 11:42:57 $
+#  $Author: cbirch $
+#  $Change: 1831834 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# SUPPORTED IMAGES
+#-------------------------------------------------------------------------------
+
+ERR_IMGS = [
+    'CORE_QDSP6_SW',
+    'CORE_QDSP6_SENSOR_SW',
+    'CORE_QDSP6_AUDIO_SW'
+]
+
+CRASH_INJECT_IMGS = [
+    'CORE_QDSP6_SW',
+    'CORE_QDSP6_AUDIO_SW'
+]
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/debugtools/err/src"
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Features and Definitions
+#-------------------------------------------------------------------------------
+env.Append(CPPDEFINES=['FEATURE_ERR_SERVICES'])
+env.Append(CPPDEFINES=['FEATURE_SAVE_DEBUG_TRACE'])
+env.Append(CPPDEFINES=['FEATURE_SAVE_TRACE_ON_BY_DEFAULT'])
+
+env.Append(CPPDEFINES=['ERR_IMG_ADSP'])
+env.Append(CPPDEFINES=['ERR_HW_QDSP6'])
+env.Append(CPPDEFINES=['ERR_CFG_QURT'])
+env.PublishPrivateApi("ERR", [
+   "${INC_ROOT}/core/debugtools/err/src/q6"
+])
+
+#check for missing dependencies
+if env.has_key('USES_DIAG_API_STUB'):
+  env.Append(CPPDEFINES=['ERR_MISSING_DEP__DIAG'])
+
+if 'USES_ERR_INJECT_CRASH' in env:
+    env.Append(CPPDEFINES=['ERR_INJECT_CRASH'])
+
+if 'USES_DEVCFG' in env:
+    env.Append(CPPDEFINES=['ERR_USES_DEVCFG'])
+
+#-------------------------------------------------------------------------------
+# External depends outside CoreBSP
+#-------------------------------------------------------------------------------
+
+env.RequireExternalApi([
+   'DSM',
+   'MODEM_MDSP',
+   'MODEM_PMIC',
+])
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+
+CBSP_API = [
+   'BOOT',
+   'DAL',
+   'DEBUGTOOLS',
+   'HAL',
+   'HWENGINES',
+   'IODEVICES',
+   'MPROC',
+   'POWER',
+   'SERVICES',
+   'STORAGE',
+   'SYSTEMDRIVERS',
+   'WIREDCONNECTIVITY',
+
+   # needs to be last also contains wrong comdef.h
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Sources
+#-------------------------------------------------------------------------------
+
+ERR_ADSP_SOURCES =  [
+    '${BUILDPATH}/err.c',
+    #'${BUILDPATH}/err_nv_log.c',
+    '${BUILDPATH}/err_exception_handler.c',
+    '${BUILDPATH}/errlog.c',
+    '${BUILDPATH}/err_exception_task.c',
+    '${BUILDPATH}/err_jettison_core.S',
+    ]
+
+ERR_ADSP_LPASS_SOURCES = [
+   '${BUILDPATH}/err.c',
+   '${BUILDPATH}/err_exception_handler.c',
+   '${BUILDPATH}/err_inject_crash.c',
+   '${BUILDPATH}/errlog.c',
+   '${BUILDPATH}/err_jettison_core.s',
+   ]
+
+ERR_ADSP_DSPS_SOURCES = [
+   '${BUILDPATH}/err_void.c',
+   ]
+
+ERR_INJECT_CRASH_SOURCES = [
+   '${BUILDPATH}/err_inject_crash.c',
+]
+
+#-------------------------------------------------------------------------------
+# Libraries
+#-------------------------------------------------------------------------------
+
+env.AddLibrary(
+   ['CORE_QDSP6_SW'],
+   '${BUILDPATH}/err', ERR_ADSP_SOURCES )
+
+env.AddLibrary(
+   ['CORE_QDSP6_SENSOR_SW'],
+   '${BUILDPATH}/err', ERR_ADSP_DSPS_SOURCES )
+
+env.AddLibrary(
+   ['CORE_QDSP6_AUDIO_SW'],
+   '${BUILDPATH}/err', ERR_ADSP_LPASS_SOURCES )
+
+if 'USES_ERR_INJECT_CRASH' in env:
+    env.AddLibrary(
+        CRASH_INJECT_IMGS,
+        '${BUILDPATH}/err_inject_crash', ERR_INJECT_CRASH_SOURCES )
+
+# Devcfg Registrations
+
+if 'USES_ERR_INJECT_CRASH' in env:
+    if 'USES_DEVCFG' in env:
+        DEVCFG_IMG = ['DAL_DEVCFG_IMG']
+        env.AddDevCfgInfo(DEVCFG_IMG,
+        {
+         'soc_xml' : ['${BUILD_ROOT}/core/debugtools/err/src/err_inject_crash.xml']
+        })
+
+# Register initializations with rcinit
+
+if 'USES_RCINIT' in env:
+   env.AddRCInitFunc(  
+    ERR_IMGS,            
+    {
+     'sequence_group'             : 'RCINIT_GROUP_1',                   # required
+     'init_name'                  : 'err_init',                         # required
+     'init_function'              : 'err_init',                         # required
+     #'dependencies'               : ['',]
+    })
+
+if 'USES_ERR_INJECT_CRASH' in env:
+  if 'USES_RCINIT' in env:
+     env.AddRCInitFunc( 
+      CRASH_INJECT_IMGS, 
+      {
+       'sequence_group'             : 'RCINIT_GROUP_7',                   # required
+       'init_name'                  : 'err_inject_crash_init',            # required
+       'init_function'              : 'err_inject_crash_init',            # required
+       #'dependencies'               : ['',]
+      })
+

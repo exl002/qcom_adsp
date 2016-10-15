@@ -1,0 +1,75 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+import os
+Import('env')
+env = env.Clone()
+
+if not 'USES_PLATFORM_MINIMAL' in env:
+  platform_root = '${BUILD_ROOT}/platform'
+  env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+  env.RequirePublicApi([
+     'HAPSDK',
+     'DLW',
+     'PLATFORM_LIBS',
+     'STDDEF',
+     'UTILS',
+     'A1STD',
+     'REMOTE',
+     'MOD_TABLE',
+     'APPS_STD',
+     'QAIC',
+    ])
+
+  env.RequireRestrictedApi([
+    'ATOMIC',
+    'TEST_PERF',
+    ])
+
+  core_public_apis = [
+     'DEBUGTOOLS',
+     'SERVICES',
+     'KERNEL',
+     ]
+
+  env.RequirePublicApi(core_public_apis, area='core')
+  #-------------------------------------------------------------------------------
+  # Source PATH
+  #-------------------------------------------------------------------------------
+  SRCPATH = "${ADSP_PLATFORM_ROOT}/rfs_tests_rpc"
+  env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+  # Register as static library
+  # FASTRPC is disabled for SIM build
+  if os.environ.get('BUILD_ACT')!='SIM':
+    env.PLRegister("rfs_tests_rpc")
+
+  env.PublishPrivateApi('RFS_TESTS_RPC', "${BUILD_ROOT}/platform/rfs_tests_rpc")
+  env.RequirePrivateApi('RFS_TESTS_RPC')
+
+  RFSTESTS_RPC_SOURCES =  [
+      env.AddQaicHeaderDep('${BUILDPATH}/rfs_tests_dsp.c', ["rfstests", "apps_std", "test_perf_types"]),
+      env.QaicSkelFromIdl("rfstests"),
+     ]
+
+  #-------------------------------------------------------------------------------
+  # Add Libraries to image
+  #-------------------------------------------------------------------------------
+  rfstests_rpc_lib = env.AddBinaryLibrary(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'],'${BUILDPATH}/rfs_tests_rpc', RFSTESTS_RPC_SOURCES)
+
+  #-------------------------------------------------------------------------------
+  # Load Subunits (sys)
+  #-------------------------------------------------------------------------------
+  env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.h', '*.S', '*.c', '*.cpp'], '${ADSP_PLATFORM_ROOT}/rfs_tests_rpc'))
+for x in env.FindFiles(['*.c', '*.cpp'], '${ADSP_PLATFORM_ROOT}/rfs_tests_rpc/build'):
+      CLEAN_LIST.remove(x)
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)
+

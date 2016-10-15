@@ -1,0 +1,22 @@
+#ifndef RFSTESTS_IDL
+#define RFSTESTS_IDL
+
+#include "AEEStdDef.idl"
+#include "test_perf_types.idl"
+
+interface rfstests {
+	uint32 RemoteFS_LoadingTests();
+	uint32 RemoteFS_PerfTests(in uint32 repeat, in uint32 numIter,  rout sequence<uint64> results);
+
+	uint32 perf_gen_apps_std_fopen_with_env(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_gen_apps_std_flen(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_gen_apps_std_fread(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_gen_apps_std_fclose(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_rfsa_open(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_rfsa_flen(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_rfsa_read(in long n, in string file, rout test_perf_result rslt);
+	uint32 perf_rfsa_close(in long n, in string file, rout test_perf_result rslt);
+};
+
+#endif
+

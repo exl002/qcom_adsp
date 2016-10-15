@@ -1,0 +1,25 @@
+#ifndef SECURITYTESTS_IDL
+#define SECURITYTESTS_IDL
+
+#include "AEEStdDef.idl"
+
+//typedef unsigned long long uint64;
+
+struct PerfResults {
+   long     size;    // sizeof file tests       
+   long     iter;    // iterations
+   uint64   avg;
+   uint64   min;
+   uint64   max;
+};
+
+
+interface securitytests {
+   long  basicTests();
+   long  initPerfTests(rout long num);
+   long  deinitPerfTests();
+   long  runPerfTest(in long n, rout PerfResults res);
+};
+
+#endif
+

@@ -1,0 +1,6 @@
+#include "AEEStdDef.idl"
+interface remotectl {
+	 long open(in string name, rout long handle, rout sequence<char> dlerror, rout long nErr);
+	 long close(in long handle, rout sequence<char> dlerror, rout long nErr);
+	 long grow_heap(in uint32 phyAddr, in uint32 nSize);
+};

@@ -1,0 +1,78 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+
+env = env.Clone()
+
+if not 'USES_PLATFORM_MINIMAL' in env:
+  platform_root = '${BUILD_ROOT}/platform'
+  env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+  env.RequirePublicApi([
+    'HAPSDK',
+    'PLATFORM_LIBS',
+    'STDDEF',
+    'APPS_STD',
+    'QAIC',
+    'UTILS',
+    ])
+
+
+  core_public_apis = [
+     'STORAGE',
+     'KERNEL',
+     ]
+
+  env.RequirePublicApi(core_public_apis, area='core')
+
+  env.RequireRestrictedApi([
+    'SECURITY',
+    'SVFS',
+    ])
+
+  #-------------------------------------------------------------------------------
+  # Source PATH
+  #-------------------------------------------------------------------------------
+  SRCPATH = "${ADSP_PLATFORM_ROOT}/svfs/src"
+  env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+  SVFS_SOURCES =  [
+     env.AddQaicHeaderDep('${BUILDPATH}/svfs.c', "apps_std")
+  ]
+
+  # Register as static library
+  env.PLRegister("svfs")
+  env.PLRegister("svfs_qdi")
+
+  SVFS_SYS_SOURCES =  [
+     '${BUILDPATH}/svfs_qdi_driver.c',
+     '${BUILDPATH}/svfs_sys_mmap.c',
+     '${BUILDPATH}/svfs_sys_mprotect.c',
+     '${BUILDPATH}/svfs_sys_munmap.c',
+     ]
+
+  if 'USES_PLATFORM_FS' in env:
+     SVFS_SYS_SOURCES.append('${BUILDPATH}/svfs_sys.c')
+
+  #-------------------------------------------------------------------------------
+  # Add Libraries to image
+  #-------------------------------------------------------------------------------
+  svfs_lib = env.AddBinaryLibrary(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], '${BUILDPATH}/svfs', SVFS_SOURCES)
+
+  svfs_sys_lib = env.AddBinaryLibrary(   ['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'],'${BUILDPATH}/svfs_sys', SVFS_SYS_SOURCES)
+
+  #-------------------------------------------------------------------------------
+  # Load Subunits (sys)
+  #-------------------------------------------------------------------------------
+  env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.h'], '${ADSP_PLATFORM_ROOT}/svfs/src'))
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.h'], '${ADSP_PLATFORM_ROOT}/svfs/inc'))
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)

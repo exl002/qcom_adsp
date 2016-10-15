@@ -1,0 +1,90 @@
+#===============================================================================
+# Copyright (c) 2013 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+import os
+env = env.Clone()
+
+if not 'USES_PLATFORM_MINIMAL' in env:
+
+  platform_root = '${BUILD_ROOT}/platform'
+  env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+  env.RequirePublicApi([
+     'HAPSDK',
+     'STDDEF',
+     'UTILS',
+     'APPS_STD',
+     'PLATFORM_LIBS',
+     'PERF',
+    ])
+
+  env.RequireRestrictedApi ([
+     'SECURITY',
+  ])
+
+  #-------------------------------------------------------------------------------
+  # Source PATH
+  #-------------------------------------------------------------------------------
+  SRCPATH = "${ADSP_PLATFORM_ROOT}/adsp_dl"
+  env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+  env.PublishPrivateApi('ADSP_DL', "${BUILD_ROOT}/platform/adsp_dl/src")
+  env.RequirePrivateApi('ADSP_DL')
+
+  ADSP_DL_SOURCES =  [
+     '${BUILDPATH}/src/adsp_dl_pl.c',
+     env.AddQaicHeaderDep('${BUILDPATH}/src/rtld.c', "apps_std"),
+     env.AddQaicHeaderDep('${BUILDPATH}/src/map_object.c', "apps_std"),
+     '${BUILDPATH}/src/reloc.c',
+     '${BUILDPATH}/src/symbol.c',
+     '${BUILDPATH}/src/xmalloc.c',
+     '${BUILDPATH}/src/xprintf.c',
+     '${BUILDPATH}/src/debug.c',
+     '${BUILDPATH}/src/load.c',
+     '${BUILDPATH}/src/search.c',
+     '${BUILDPATH}/src/headers.c',
+     '${BUILDPATH}/src/paths.c',
+     '${BUILDPATH}/src/arch/hexagon/mdreloc.c',
+     '${BUILDPATH}/src/arch/hexagon/mdreloc.c',
+     '${BUILDPATH}/src/arch/hexagon/rtld_start.S',
+     ]
+
+  env.Append(CPPDEFINES = 'QC_EDL')
+  env.Append(CPPDEFINES = 'RTLD_LOADER')
+  env.Append(CPPDEFINES = '_RTLD_SOURCE')
+  env.Append(CPPDEFINES = 'PASS_DEBUG_VARS')
+  env.Append(CPPDEFINES = '_LKM')
+  env.Append(CPPDEFINES = 'ELFSIZE=32')
+  env.Append(CPPDEFINES = 'ELFSIZE=32')
+  env.Append(CPPDEFINES = 'LIBDIR=\\\".\\\"')
+  env.Append(CPPDEFINES = '_PATH_RTLD=\\\"./ld_hexagon_elf.so\\\"')
+  env.Append(CPPDEFINES = 'RTLD_DEFAULT_LIBRARY_PATH=\\\":.\\\"')
+
+  #-------------------------------------------------------------------------------
+  # Add Libraries to image
+  #-------------------------------------------------------------------------------
+  adsp_dl_lib = env.AddBinaryLibrary(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'],'${BUILDPATH}/adsp_dl', ADSP_DL_SOURCES)
+
+  #-------------------------------------------------------------------------------
+  # Load Subunits (sys)
+  #-------------------------------------------------------------------------------
+  env.LoadSoftwareUnits()
+
+# Clean / pack rules
+CLEAN_LIST=[
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/arch/hexagon/Makefile.inc',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/loader/initspecs',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/loader/makeinit',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/ld.elf_so.1',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/Makefile',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/README',
+    '${ADSP_PLATFORM_ROOT}/adsp_dl/src/TODO',
+]
+
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.h', '*.S'], '${ADSP_PLATFORM_ROOT}/adsp_dl/src'))
+
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+     'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)

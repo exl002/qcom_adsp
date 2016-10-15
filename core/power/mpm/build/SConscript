@@ -1,0 +1,168 @@
+#===============================================================================
+#
+# MAO Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2013 by QUALCOMM Technologies Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/core/pkg/mpss/dev/rsaxena.8974_vmpm_DalInt/modem_proc/core/power/mpm/build/SConscript#4 $
+#  $DateTime: 2012/07/25 11:01:55 $
+#  $Author: rsaxena $
+#  $Change: 2628537 $
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+# Create a processor specific macro which can be (ab)used for feature-ization.  
+env.Append(CPPDEFINES = [( 'MPM_BASE_NAME', 'LPASS' )])
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/power/mpm/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'HAL',
+   'DEBUGTOOLS',
+   'MPROC',
+   'POWER',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+
+   'KERNEL'
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+env.PublishPrivateApi('POWER_MPM', [
+   "${INC_ROOT}/core/power/mpm/inc",
+   "${INC_ROOT}/core/power/mpm/inc/dal",
+   "${INC_ROOT}/core/power/mpm/src",
+   "${INC_ROOT}/core/power/mpm/src/hal",
+])
+
+env.PublishPrivateApi('POWER_MPM_INTERNAL', [
+   "${INC_ROOT}/core/power/mpm/src",
+])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+DALMPM_SOURCES = [
+   '${BUILDPATH}/dal/Dalmpm.c',
+   '${BUILDPATH}/dal/DalmpmFwk.c',
+   '${BUILDPATH}/dal/DalmpmInfo.c',
+ ]
+
+dalmpm_obj = env.Object(DALMPM_SOURCES)
+dalmpm_lib = env.Library('${BUILDPATH}/Dalmpm', dalmpm_obj)
+
+
+#-------------------------------------------------------------------------------
+# for mpmint_internal.c below, right now all scon targets have 
+# tramp functionality available. If we ever have a target on 
+# scons that does not have tramp functions, we will need some
+# new definition to differentiate it
+#-------------------------------------------------------------------------------
+
+MPMINT_SOURCES =  [
+   '${BUILDPATH}/mpmint.c',
+   '${BUILDPATH}/mpm_utils.c',
+   '${BUILDPATH}/mpmint_log.c',
+   '${BUILDPATH}/os/default/mpmint_os.c',
+   '${BUILDPATH}/os/default/mpmint_target.c',
+   '${BUILDPATH}/hal/HALmpmint.c',
+   '${BUILDPATH}/hal/HALmpmintIPC.c',
+   '${BUILDPATH}/hal/HALmpmintTarget.c',
+]
+
+mpmint_obj = env.Object(MPMINT_SOURCES)
+mpmint_lib = env.Library('${BUILDPATH}/mpmint', mpmint_obj)
+
+#------------------------------------------------------------------------------
+# Add device config information
+#------------------------------------------------------------------------------
+if 'USES_DEVCFG' in env:
+  DEVCFG_IMG = ['DAL_DEVCFG_IMG']
+  default_dalmpm_xml = '${BUILD_ROOT}/core/power/mpm/config/dalmpm.xml'
+  env.AddDevCfgInfo(DEVCFG_IMG, 
+  {
+      '8974_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8974/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8974/MPMIntHalDevCfgData.c'],
+	  '8994_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8994/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8994/MPMIntHalDevCfgData.c'],
+      '9x25_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/9x25/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/9x25/MPMIntHalDevCfgData.c'],
+      '8x26_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8x26/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8x26/MPMIntHalDevCfgData.c'],
+      '8x10_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8x10/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8x10/MPMIntHalDevCfgData.c'],
+      '9x35_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/9x35/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/9x35/MPMIntHalDevCfgData.c'],
+      '8962_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8962/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8962/MPMIntHalDevCfgData.c'],
+      '8x62_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml', 
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8962/MPMIntDevCfgData.c', # Requires actual mapping
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8962/MPMIntHalDevCfgData.c'],
+      '8084_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8084/MPMIntDevCfgData.c',
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8084/MPMIntHalDevCfgData.c'],					
+      '8092_xml' : ['${BUILD_ROOT}/core/power/mpm/config/MPMDevCfg.xml',
+                    default_dalmpm_xml,
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8092/MPMIntDevCfgData.c', # Requires actual mapping
+                    '${BUILD_ROOT}/core/power/mpm/config/asic/8092/MPMIntHalDevCfgData.c'] 
+  })
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+IMG_LIST = ['CORE_QDSP6_SW', 'CBSP_QDSP6_SW_IMAGE']
+
+env.AddLibsToImage(IMG_LIST,[mpmint_lib])
+env.AddLibsToImage(IMG_LIST,[dalmpm_lib])
+
+#-------------------------------------------------------------------------------
+# Add mpmint_init function to RCINIT
+#-------------------------------------------------------------------------------
+
+# rpm driver properties
+RCINIT_PROPS = {
+  'sequence_group'             : 'RCINIT_GROUP_0',
+  'init_name'                  : 'mpmint',
+  'init_function'              : 'mpmint_init',
+  'dependencies'               : ['GPIOInt', 'dalsys'],
+}
+
+if 'USES_RCINIT' in env: 
+  env.AddRCInitFunc(IMG_LIST, RCINIT_PROPS)

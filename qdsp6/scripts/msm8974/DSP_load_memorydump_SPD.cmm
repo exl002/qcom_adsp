@@ -1,0 +1,185 @@
+;****************************************************************
+; filename: DSP_timestamp_check.cmm
+;
+;****************************************************************
+LOCAL &ramdumppath &smddumppath &f3logpath &ulogpath &otherinfo
+entry &choice 
+
+TOOLBAR ON
+STATUSBAR ON
+
+ENTRY
+
+AREA.RESet
+WINPOS 0. 0. 100% 100%
+AREA.Create "output"
+AREA.view "output"
+
+;----------------------------------------------------------------------------
+; Set the desired CPU
+;----------------------------------------------------------------------------
+;sys.cpu HexagonV5H
+;sys.up
+
+pwd
+cd ../../../
+pwd
+
+print " "
+print "Enter the choice number. DO YOU HAVE THE RAM DUMP FROM QPST?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH INCLUDING THE RAMDUMP FILE NAME FROM QPST" 
+print " "
+print " "
+enter &ramdumppath
+
+win.title "&ramdumppath"
+
+do qdsp6\scripts\msm8974\DSP_connect_memdump_SPD.cmm &ramdumppath 0x000000 0xDC00000
+
+win.title "&ramdumppath"
+
+Area.Select "output"
+AREA.view "output"
+)
+else
+(
+
+print " "
+print "Enter the choice number. DO YOU HAVE THE RAM DUMP FOR SMD?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+
+print "PLEASE ENTER THE PATH INCLUDING THE RAMDUMP FILE NAME" 
+print " "
+print " "
+enter &ramdumppath
+
+win.title "&ramdumppath"
+if &choice==1
+(
+print "PLEASE ENTER THE PATH INCLUDING THE SMD RAMDUMP FILE NAME" 
+print " "
+print " "
+enter &smddumppath
+)
+
+Area.Select "output"
+AREA.view "output"
+if &choice==1
+(
+do qdsp6\scripts\msm8974\DSP_connect_memdump_SPD.cmm &ramdumppath 0xdc00000 0xdc00000 &smddumppath 0xfa00000
+)
+else
+(
+do qdsp6\scripts\msm8974\DSP_connect_memdump_SPD.cmm &ramdumppath 0xdc00000 0xdc00000
+)
+)
+
+win.title "&ramdumppath"
+do core\kernel\qurt\kernel\scripts\analy_qurt_error.cmm
+win.title "&ramdumppath"
+
+do qdsp6\scripts\msm8974\DSP_load_pagetables.cmm
+win.title "&ramdumppath"
+
+Area.Select "output"
+AREA.view "output"
+
+&choice=0
+
+print " "
+print "Enter the choice number. Do you need F3 log?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH YOU WANT TO STORE THE F3 LOG" 
+print " "
+print " "
+enter &f3logpath
+do recover_f3.cmm &f3logpath
+)
+
+Area.Select "output"
+AREA.view "output"
+&choice=0
+
+print " "
+print "Enter the choice number. Do you need U-log?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH YOU WANT TO STORE THE U-LOG" 
+print " "
+print " "
+enter &ulogpath
+do core\power\ulog\scripts\ULogDump.cmm &ulogpath
+)
+
+Area.Select "output"
+AREA.view "output"
+
+&choice=0
+
+print " "
+print "Enter the choice number. Do you want more information?" 
+print " "
+print " "
+print "1.  Yes"
+print "2.  No"
+print " "
+print " "
+enter &choice
+
+if &choice==1
+(
+print "PLEASE ENTER THE PATH YOU WANT TO STORE THE INFO" 
+print " "
+print " "
+enter &otherinfo
+
+do qdsp6\scripts\msm8974\DSP_dump_info.cmm &otherinfo
+
+print " "
+print " "
+print "Information is saved in the location"
+print " "
+print " "
+
+)
+
+print " "
+print " "
+print "DONE"
+print " "
+print " "

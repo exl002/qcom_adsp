@@ -1,0 +1,59 @@
+#===============================================================================
+#
+# AVS AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime: $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env.Append(CFLAGS = '-Werror')
+env.Append(CPPFLAGS = '-Werror')
+
+
+env.PublishProtectedApi('AVS',[
+   '${INC_ROOT}/avs/elite/utils/devcfg/inc',
+   '${INC_ROOT}/avs/avcs/inc',
+   '${INC_ROOT}/avs/avcs/tst',
+   '${INC_ROOT}/avs/aud/services/static_svcs/audio_dev_mgr/inc',
+   '${INC_ROOT}/avs/aud/services/static_svcs/audio_stream_mgr/inc',
+   '${INC_ROOT}/avs/aud/services/static_svcs/matrix_mixer_svc\inc',
+   '${INC_ROOT}/avs/aud/services/static_svcs/stream_router_svc\inc',
+   '${INC_ROOT}/avs/ultrasound/services/static_svcs/stream_mgr/inc',
+   '${INC_ROOT}/avs/afe/services/static/inc',
+   '${INC_ROOT}/avs/afe/services/static/tst',
+   '${INC_ROOT}/avs/aud/services/dynamic_svcs/audio_proc_svc/inc',
+   '${INC_ROOT}/avs/aud/services/dynamic_svcs/audio_proc_svc/tst',
+   '${INC_ROOT}/avs/voice/services/voice_timer/inc',
+   '${INC_ROOT}/avs/voice/services/voice_dec/inc',
+   '${INC_ROOT}/avs/voice/services/voice_common/inc',
+   '${INC_ROOT}/avs/voice/services/voice_mixer/inc',
+   '${INC_ROOT}/avs/voice/services/voice_proc_mgr/inc',
+   '${INC_ROOT}/avs/voice/services/voice_proc_rx/inc',
+   '${INC_ROOT}/avs/voice/services/voice_proc_tx/inc',   
+   '${INC_ROOT}/avs/voice/services/voice_stream_mgr/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audencdec/tst/inc',
+   '${INC_ROOT}/avs/vsd/inc/protected',
+   '${INC_ROOT}/avs/afe/drivers/hw/ssr/hal/target/inc',
+   '${INC_ROOT}/avs/afe/drivers/hw/ssr/hal/target/inc',   
+   ])
+
+env.LoadSoftwareUnits()

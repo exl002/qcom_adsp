@@ -1,0 +1,4 @@
+<driver name="mpm">
+	<device id="/dev/mpm">
+  </device>
+</driver>

@@ -1,0 +1,215 @@
+#===============================================================================
+#                    Copyright 2009 QUALCOMM Incorporated.
+#                           All Rights Reserved.
+#                         QUALCOMM Proprietary/GTDR
+#===============================================================================
+#
+#                            Power Debug Tool
+#
+#==============================================================================
+#
+#                        EDIT HISTORY FOR MODULE
+#
+# $Header: //components/rel/core.adsp/2.2/powertools/pwrdb/build/SConscript#2 $
+# $DateTime: 2013/09/19 08:53:29 $
+# $Author: coresvc $
+#
+# when          who             what, where, why
+# --------      ---             -------------------------------------------
+#  07/27/11     rohans          Initial creation - Integration into 8960      
+#
+#==============================================================================
+
+Import('env')
+env.Clone()
+
+
+# Turn on debug message for power debug task
+# env.Append(CPPDEFINES = ["MSG_BT_SSID_DFLT=MSG_SSID_PWRDB"])
+#-------------------------------------------------------------------------------
+# SRC PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/powertools/pwrdb/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+
+#-------------------------------------------------------------------------------
+# External depends outside CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([
+   'ASIC',
+   'CS',
+   'DSM',
+   'BREW',
+   'MODEM_API',
+   'MODEM_MMODE',
+   'MODEM_PMIC',
+   'MODEM_DATA',
+   'MODEM_1X',
+   'MODEM_RF',
+   'MODEM_SERVICES',
+   'MODEM_NAS',
+   'MODEM_GPS',
+   'MODEM_UIM',
+   'MODEM_WCDMA',
+   'MODEM_FTM',
+   'MODEM_HDR',
+   'MODEM_ADIE',
+   'MODEM_MDSP',
+   'MODEM_MCS',
+   'MODEM_GERAN',
+   'MULTIMEDIA_AUDIO',
+   'MULTIMEDIA_DISPLAY',
+   'MULTIMEDIA_CAMERA',
+   'MULTIMEDIA_CORE',
+   'MULTIMEDIA_GRAPHICS',
+   'MULTIMEDIA',
+   'WCONNECT',
+])
+
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'BUSES',
+   'DAL',
+   'HAL',
+   'DEBUGTOOLS',
+   'DEBUGTRACE',
+   'IODEVICES',
+   'MPROC',
+   'PWRDB',
+   'POWER',
+   'SERVICES',
+   'STORAGE',
+   'SYSTEMDRIVERS',
+   'WIREDCONNECTIVITY',
+# needs to be last also contains wrong comdef.h
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# External depends within CoreBSP
+#-------------------------------------------------------------------------------
+# Note: this needs to come last to ensure proper inclusion of other header files
+
+#-------------------------------------------------------------------------------
+env.Append(CPPDEFINES = [
+   'FEATURE_LIBRARY_ONLY',
+])
+
+env.Append(CPPDEFINES = ["DIRNAME=\\\"${BUILD_TARGET}\\\""])
+
+#-------------------------------------------------------------------------------
+# QDSS Tracer definitions
+#-------------------------------------------------------------------------------
+if 'USES_QDSS_SWE' in env:
+   QDSS_IMG = ['QDSS_EN_IMG']
+
+   events = [['PWRDB_SWE_0','Pwrdb Startup %x'],
+             ['PWRDB_SWE_1','%d %d %d'],          #-ctk Standard output over QDSS
+             ['PWRDB_SWE_2','TS QDSS LOG'],
+             ['PWRDB_SWE_3','Future Impl'],]
+   env.AddSWEInfo(QDSS_IMG, events)
+
+#-------------------------------------------------------------------------------
+PWRDB_SOURCES = [
+    '${BUILDPATH}/pwrdb_pack.c',
+    '${BUILDPATH}/pwrdb_task.c',
+]
+
+# Seperate the source file pwrdb.c for generating text file
+PWRDB_SOURCE = [
+    '${BUILDPATH}/pwrdb.c',
+]
+
+
+#pwrdb_objs = env.Object(PWRDB_SOURCES)
+
+#pwrdb_lib = env.AddLibrary(['QDSP6_SW_IMAGE'],'${BUILDPATH}/pwrdb', pwrdb_objs + pwrdb_obj)
+
+
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+#PWRDB_SOURCES += ['${BUILDPATH}/pwrdb.c']
+#if not env.GetOption('cleanpack'):
+if 'HCBSP' in env:
+	pwrdb_lib = env.AddLibrary(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'APPS_IMAGE', 'CBSP_APPS_IMAGE','SINGLE_IMAGE',
+					'CBSP_SINGLE_IMAGE', 'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], '${BUILDPATH}/pwrdb', [PWRDB_SOURCE, PWRDB_SOURCES])
+#env.AddLibrary(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'APPS_IMAGE', 'CBSP_APPS_IMAGE','SINGLE_IMAGE',
+#                'CBSP_SINGLE_IMAGE', 'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], '${BUILDPATH}/pwrdb', PWRDB_SOURCES)
+
+
+	if env.has_key('MODEM_PROC'):
+		env.Append(CPPDEFINES=['FEATURE_PWRDB_MPSS'])
+
+	if env.has_key('ADSP_PROC'):
+		env.Append(CPPDEFINES=['FEATURE_PWRDB_ADSP'])
+	
+#if env.IsKeyEnable(['']):
+#-------------------------------------------------------------------------------
+# Generate pwrdb.txt file using BINTOOL(fromelf) in rvct.py
+#-------------------------------------------------------------------------------
+# if 'QDSP6_SW_IMAGE' in env:
+#if env.IsKeyEnable(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'APPS_IMAGE', 'CBSP_APPS_IMAGE','SINGLE_IMAGE',
+#                    'CBSP_SINGLE_IMAGE', 'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE']):
+#	TextFileAction  = env.GetBuilderAction('${BINTOOL} --text -g $SOURCE --output $TARGET')
+#	TextFileBuilder = env.Builder(action = TextFileAction)       
+#	env.Append(BUILDERS = {'GenTextFile' : TextFileBuilder})
+#	
+#	pwrdb_obj = env.Object(PWRDB_SOURCE)
+#	pwrdb_txt = env.GenTextFile('${BUILD_ROOT}/core/powertools/pwrdb/offtarget/pwrdb.txt',pwrdb_obj)      
+#	env.Depends(pwrdb_lib, pwrdb_txt)
+
+#-------------------------------------------------------------------------------
+# RCINIT_PWRDB
+#-------------------------------------------------------------------------------
+
+
+if env.has_key('MODEM_PROC'):
+   RCINIT_PWRDB = ['CORE_MODEM', 'CORE_QDSP6_SW']
+   RCINIT_TASK_PWRDB = {
+   'thread_name'                : 'pwrdb',                        # required
+   #'thread_type'                : 'RCINIT_TASK_DALTASK',
+   'sequence_group'             : 'RCINIT_GROUP_7',               # required
+   'stack_size_bytes'           : '16384',                        # required
+   'priority_amss_order'        : 'PWRDB_PRI_ORDER',              # required, legacy value pri_order, not exported, run at same pri as TMC
+   'cpu_affinity'               : 'REX_ANY_CPU_AFFINITY_MASK'     # opt, REX_ANY_CPU_AFFINITY_MASK or REX_SINGLE_CPU_AFFINITY_MASK
+   } 
+if env.has_key('ADSP_PROC'):
+   RCINIT_PWRDB = ['CORE_QDSP6_SW']
+   RCINIT_TASK_PWRDB = {
+   'thread_name'                : 'pwrdb',                        # required
+   'thread_type'                : 'RCINIT_TASK_QURTTASK',
+   'thread_entry'               : 'pwrdb_task',
+   'sequence_group'             : 'RCINIT_GROUP_7',               # required
+   'stack_size_bytes'           : '16384',                        # required
+   'priority_amss_order'        : 'PWRDB_PRI_ORDER',              # required, legacy value pri_order, not exported, run at same pri as TMC
+   'dependencies'               : ['dalsys', 'diag']
+   }
+
+if 'HCBSP' in env: 
+  if 'USES_RCINIT' in env: 
+		env.AddRCInitTask(RCINIT_PWRDB, RCINIT_TASK_PWRDB)
+
+
+if 'HCBSP' in env: 
+    env.LoadSoftwareUnits()
+		
+#-------------------------------------------------------------------------------
+# Pack Info for Pwrdb
+#-------------------------------------------------------------------------------
+CLEAN_PWRDB_SOURCES = env.FindFiles("*", "${BUILD_ROOT}/core/powertools/")
+
+if env.has_key('ADSP_PROC'):
+  env.CleanPack(['CORE_QDSP6_SW'],CLEAN_PWRDB_SOURCES)
+
+if env.has_key('MODEM_PROC'):
+  env.CleanPack(['MODEM_MODEM','CBSP_MODEM_IMAGE','MODEM_IMAGE','CORE_MODEM','CORE_QDSP6_SW'],CLEAN_PWRDB_SOURCES)

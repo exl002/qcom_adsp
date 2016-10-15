@@ -1,0 +1,322 @@
+entry &loc &CurrentDirectory &Target_Name
+printer.file &loc\flush_cache.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.d.dump QURTK_flush_cache_status
+printer.file &loc\dsp_QT.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.tasklist
+printer.file &loc\dsp_FT.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.ftxlist
+printer.file &loc\dsp_IN.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.irql
+printer.file &loc\dsp_MM.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.memlist
+printer.file &loc\dsp_DB.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.dbg
+printer.file &loc\dsp_MB.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.tracelist 7
+printer.file &loc\dsp_vf_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.v.f
+thread 1
+wp.v.f
+thread 2
+wp.v.f 
+printer.file &loc\dsp_code_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.d.l
+thread 1
+wp.d.l
+thread 2
+wp.d.l 
+printer.file &loc\dsp_reg_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.register
+thread 1
+wp.register
+thread 2
+wp.register
+printer.file &loc\dsp_mmu.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.mmu.list
+printer.file &loc\dsp_qurt_status.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v (int)QURT_system_state
+printer.file &loc\dsp_smd_info.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v %open %string smd_info[2] smd_info[2].info.stream.tx_shared_info_ptr smd_info[2].info.stream.rx_shared_info_ptr smd_info[3] smd_info[3].info.stream.tx_shared_info_ptr smd_info[3].info.stream.rx_shared_info_ptr smd_info[4] smd_info[4].info.stream.tx_shared_info_ptr smd_info[4].info.stream.rx_shared_info_ptr smd_info[5] smd_info[5].info.stream.tx_shared_info_ptr smd_info[5].info.stream.rx_shared_info_ptr smd_info[6] smd_info[6].info.stream.tx_shared_info_ptr smd_info[6].info.stream.rx_shared_info_ptr smd_info[7] smd_info[7].info.stream.tx_shared_info_ptr smd_info[7].info.stream.rx_shared_info_ptr smd_info[8] smd_info[8].info.stream.tx_shared_info_ptr smd_info[8].info.stream.rx_shared_info_ptr smd_info[9] smd_info[9].info.stream.tx_shared_info_ptr smd_info[9].info.stream.rx_shared_info_ptr smd_info[10] smd_info[10].info.stream.tx_shared_info_ptr smd_info[10].info.stream.rx_shared_info_ptr
+
+printer.file &loc\Area_IO.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.Area IO
+printer.file &loc\Qurt_Error_Info.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v %OPEN.2 %HEX QURT_error_info
+&command="perl &CurrentDirectory\CrashedThread.pl &loc"
+OS.Hidden &command
+;dialog.message "Time Stamp in Dumps and elf file are Matched-Level1 of validating Dumps passed"
+OPEN #1 "&loc\GetCrashedTCB.txt" /READ
+READ #1 %line &CheckFlag
+READ #1 %line &TCBPointer
+CLOSE #1
+printer.file &loc\Error_Cause.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v (((QURTK_thread_context*)&TCBPointer)->error.cause)
+printer.file &loc\SSRELR.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v (((QURTK_thread_context*)&TCBPointer)->ssrelr) %HEX
+if (&CheckFlag==1)
+(
+printer.file &loc\Crashed_ThreadCallStack.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.f /task &TCBPointer
+printer.file &loc\Crashed_ThreadCallStack_Locals.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.f /locals /task &TCBPointer
+printer.file &loc\Crashed_Thread_RegSet.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+r
+;do &CurrentDirectory\loadtcb.cmm
+do &CurrentDirectory\loadtcb.cmm &TCBPointer
+wp.r
+;wp.v.v %hex %tree.open (QURTK_thread_context *)&TCBPointer
+&command="perl &CurrentDirectory\CrashedThreadELR.pl &loc"
+OS.Hidden &command
+;dialog.message "Time Stamp in Dumps and elf file are Matched-Level1 of validating Dumps passed"
+OPEN #1 "&loc\GetCrashedELR.txt" /READ
+READ #1 %line &CrashedThreadELRVal
+printer.file &loc\Crashed_ThreadLastExe_Code.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.d.l &CrashedThreadELRVal
+)
+if (&CheckFlag==2)
+(
+printer.file &loc\Crashed_ThreadCallStack.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.f /task &TCBPointer
+printer.file &loc\Crashed_ThreadCallStack_Locals.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.f /locals /task &TCBPointer
+printer.file &loc\Crashed_Thread_RegSet.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+r
+;do &CurrentDirectory\loadtcb.cmm
+;;do &CurrentDirectory\loadtcb.cmm &TCBPointer
+wp.r /task &TCBPointer
+;wp.v.v %hex %tree.open (QURTK_thread_context *)&TCBPointer
+&command="perl &CurrentDirectory\CrashedThreadELR.pl &loc"
+OS.Hidden &command
+;dialog.message "Time Stamp in Dumps and elf file are Matched-Level1 of validating Dumps passed"
+OPEN #1 "&loc\GetCrashedELR.txt" /READ
+READ #1 %line &CrashedThreadELRVal
+printer.file &loc\Crashed_ThreadLastExe_Code.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.d.l &CrashedThreadELRVal
+)
+printer.open &loc\SWFatal_Error.txt
+wp.v.v %STRING coredump.err.message
+wp.v.v %STRING coredump.err.filename
+wp.v.v %decimal coredump.err.param
+printer.file.close
+printer.file &loc\Crash_Info.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+do &CurrentDirectory\get_error.cmm &TCBPointer
+printer.file &loc\Error_info.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.area err_info
+;dialog.message "&Target_Name"
+if OS.DIR(&OutputPath\Def_Heap)
+(
+   print " Def_Heap diretory already exists"
+)
+else 
+(
+  mkdir &OutputPath\Def_Heap
+)
+
+
+if OS.DIR(&OutputPath\Def_Heap_forSensors_img)
+(
+   print " Def_Heap_forSensors_img diretory already exists"
+)
+else 
+(
+  mkdir &OutputPath\Def_Heap_forSensors_img
+)
+
+if ("&Target_Name"=="8x10")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm default_heap_state &loc\Def_Heap
+wp.area ST
+)
+else if ("&Target_Name"=="8610")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm default_heap_state &loc\Def_Heap
+wp.area ST
+)
+else if ("&Target_Name"=="8x26")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8x26AAAAAAAAQ1234_reloc\memory_wrappers\default_heap_state &loc\Def_Heap
+wp.area ST
+printer.file &loc\Heap_Analysis_Sensors.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8x26AAAAAAAAQ1234_SENSOR_reloc\memory_wrappers\default_heap_state &loc\Def_Heap_forSensors_img
+wp.area ST
+)
+else if ("&Target_Name"=="8626")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8x26AAAAAAAAQ1234_reloc\memory_wrappers\default_heap_state &loc\Def_Heap
+wp.area ST
+printer.file &loc\Heap_Analysis_Sensors.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8x26AAAAAAAAQ1234_SENSOR_reloc\memory_wrappers\default_heap_state &loc\Def_Heap_forSensors_img
+wp.area ST
+)
+else if ("&Target_Name"=="8974")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8974AAAAAAAAQ1234_reloc\memory_wrappers\default_heap_state &loc\Def_Heap
+wp.area ST
+printer.file &loc\Heap_Analysis_Sensors.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M8974AAAAAAAAQ1234_SENSOR_reloc\memory_wrappers\default_heap_state &loc\Def_Heap_forSensors_img
+wp.area ST
+)
+else if ("&Target_Name"=="9x25")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M9x25AAAAAAAAAQ1234_reloc\memory_wrappers\default_heap_state &OutputPath\Def_Heap
+wp.area ST
+)
+else if ("&Target_Name"=="9625")
+(
+printer.file &loc\Heap_Analysis_GuestOS.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+;cd qdsp6\scripts\msm8974
+do memheap2_heapWalker.cmm \\M9x25AAAAAAAAAQ1234_reloc\memory_wrappers\default_heap_state &OutputPath\Def_Heap
+wp.area ST
+)
+printer.file &loc\DebugBuffer.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.dbg
+printer.file &loc\MergeBuffer.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.tracelist 7
+printer.file &loc\ChickenBits_Value.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v %hex QURTK_chicken_bits_chicken
+;do &CurrentDirectory\DSP_stack_check.cmm &loc
+data.save.binary &loc\your_dumpfile1.bin v.range(apr_log_history)
+cd &CurrentDirectory
+&command="hist_parser.exe &loc\your_dumpfile1.bin"
+printer.open "&loc\apr_logs.txt"
+wp.OS.command &command
+printer.close
+&command="perl &CurrentDirectory\DSP_Analysis.pl &loc &Target_Name"
+Os.Hidden &command
+&command="python &CurrentDirectory/LogUtils.py merge op &loc\Merged_ulog.ulog srcfolder &loc all ulog withsrc"
+Os.Hidden &command
+&command="python &CurrentDirectory/tail.py &loc/Merged_ulog.ulog &loc/DSPAnalysis.txt 30"
+Os.Hidden &command
+&command="perl &CurrentDirectory\f3_parser.pl &loc"
+Os.Hidden &command
+dialog.message "The Crash analysis is provided in the file DSPAnalysis.txt @ &loc"
+(
+AREA.Create A000 2000. 2000. ; change size of the default area
+AREA.RESet
+AREA.Create Final 500. 1000. ;create and show message area
+AREA.Select Final
+AREA.view Final
+LOCAL &headerline
+OPEN #1 "&loc\DSPAnalysis.txt" /READ
+READ #1 %line &headerline
+PRINT "&headerline"
+RePeaT 
+(
+READ #1 %line &headerline
+IF EOF()
+GOTO endloop
+PRINT "&headerline"
+)
+endloop: CLOSE #1
+)
+
+
+
+
+
+
+
+
+
+
+
+
+

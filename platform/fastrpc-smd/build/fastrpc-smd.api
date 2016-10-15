@@ -1,0 +1,21 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+
+
+#-------------------------------------------------------------------------------
+# Publish include dirs
+#-------------------------------------------------------------------------------
+
+env.PublishRestrictedApi('FASTRPC_SMD', [
+   "${INC_ROOT}/platform/fastrpc-smd",
+])
+
+env.PublishPublicApi('POWER_BOOST', [
+   "${INC_ROOT}/platform/fastrpc-smd/inc",
+])
+
+

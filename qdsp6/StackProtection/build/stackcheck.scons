@@ -1,0 +1,81 @@
+#===============================================================================
+#
+# stackcheck AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspcore.adsp/2.2/StackProtection/build/stackcheck.scons#1 $
+#  $DateTime: 2013/05/23 14:56:28 $
+#  $Author: coresvc $
+#  $Change: 3813989 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+# Core API 
+#  KERNEL for qube.h used by qurt_elite.h and qurt.h
+#  SERVICES for msg.h and msgcfg.h
+#  DEBUGTOOLS for err.h
+
+core_public_apis = [
+   'KERNEL',
+   'SERVICES',
+   'DEBUGTOOLS'
+   ]
+
+avs_public_apis = [
+   'AVS'
+   ]
+
+env.PublishPrivateApi('STACKCHECK',[
+    '../inc',
+   ])
+
+env.RequirePublicApi(core_public_apis, area='core')
+env.RequirePublicApi(avs_public_apis, area='avs')
+env.RequireRestrictedApi('QDSP6')
+
+
+#-------------------------------------------------------------------------------
+# Setup source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/qdsp6/StackProtection/src"
+#LIBNAME = 'stackcheck'
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+
+env.Append(CPPPATH = [
+   "${INC_ROOT}/core/securemsm/cryptodrivers/prng/shared/inc", 
+   "${INC_ROOT}/core/securemsm/cryptodrivers/prng/chipset/inc", 
+   "${INC_ROOT}/core/securemsm/cryptodrivers/prng/environment/inc",
+   "${INC_ROOT}/core/securemsm/cryptodrivers/prng/environment/src", 
+   "${INC_ROOT}/core/securemsm/cryptodrivers/prng/environment/env/adsp/inc",   
+])
+
+
+SRC_DIRS = [
+              '${BUILDPATH}/StackCheck.c', 
+              ]
+
+
+env.AddObject(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], [SRC_DIRS])
+
+
+#stackcheck_sources = env.GlobSourceFiles(SRC_DIRS, SRCPATH,posix=True)
+
+#env.AddLibrary(['CBSP_QDSP6_SW_IMAGE'], '${BUILDPATH}/'+LIBNAME, stackcheck_sources)

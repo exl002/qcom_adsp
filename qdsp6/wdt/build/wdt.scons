@@ -1,0 +1,72 @@
+#===============================================================================
+#
+# WDT AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspcore.adsp/2.2/wdt/build/wdt.scons#1 $
+#  $DateTime: 2013/05/23 14:56:28 $
+#  $Author: coresvc $
+#  $Change: 3813989 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+# Core API 
+#  SYSTEMDRIVERS for HALhwio.h
+#  DAL for HALcomdef.h
+#  SERVICES for com_dtypes.h
+#  KERNEL for qube.h used by qurt_elite.h
+#  DEBUGTOOLS for err.h
+
+core_public_apis = [
+   'SYSTEMDRIVERS',
+   'DAL',
+   'SERVICES',
+   'KERNEL',
+   'DEBUGTOOLS'
+   ]
+
+avs_public_apis = [
+   'AVS'
+   ]
+
+env.PublishPrivateApi('WDT',[
+    '../inc',
+   ])
+
+env.RequirePublicApi(core_public_apis, area='core')
+env.RequirePublicApi(avs_public_apis, area='avs')
+env.RequireRestrictedApi('QDSP6')
+
+
+#-------------------------------------------------------------------------------
+# Setup source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/qdsp6/wdt/src"
+LIBNAME = 'wdt'
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+SRC_DIRS = [
+              '*.cpp', 
+              '*.c', 
+              ]
+
+wdt_sources = env.GlobSourceFiles(SRC_DIRS, SRCPATH,posix=True)
+
+env.AddLibrary(['CBSP_QDSP6_SW_IMAGE'], '${BUILDPATH}/'+LIBNAME, wdt_sources)

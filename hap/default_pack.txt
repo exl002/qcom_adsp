@@ -1,0 +1,3 @@
+--chipset msm8x26  
+--pid mpd  
+--buildid 0x8fffffff  

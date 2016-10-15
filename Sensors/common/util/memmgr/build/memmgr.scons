@@ -1,0 +1,168 @@
+#===============================================================================
+#
+# MEMMGR Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2014 by Qualcomm Technologies, Inc.  All Rights Reserved
+# Qualcomm Technologies Proprietary and Confidential
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header:  $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 06/25/2013  ps     update require method for Public APIs
+# 12/02/2012  ag     Add multi PD support
+# 01/12/2012  br     Inserted mem_cfg_frag1.c for build
+# 11/14/2011 jhh     Included debug api for heap memory analysis
+# 04/14/2011  dc     Updates for Blast OS.
+# 12/22/2010  pg     Update for accessing UCOS header files from DALSYS. 
+# 2010-08-30 JTL     Adding sns_memmgr.c
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/common/util/memmgr/src"
+
+#if not env.SubstPathExists(SRCPATH):
+#   # Legay Path
+#   SRCPATH = "${BUILD_ROOT}/sensors/dsps"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+env.Append(CPPDEFINES = ["DAL_NATIVE_PLATFORM"])
+
+#-------------------------------------------------------------------------------
+# External depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([
+   'BREW',
+   'CS',
+   'DSM',
+  ])
+
+#-------------------------------------------------------------------------------
+# External depends outside CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'DEBUGTOOLS',
+   'HAL',
+   'HWENGINES',
+   'IODEVICES',
+   'MPROC',
+   'SYSTEMDRIVERS',
+   'HWIO',
+   'HWIO_API',
+   'SERVICES',
+    # needs to be last also contains wrong comdef.h
+   'KERNEL',
+]
+
+#env.RequireExternalApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequirePublicApi(CBSP_API, area='core')
+
+env.UsesInc([
+   "${HWIO}",
+   "${HWIO_API}",
+])
+
+#-------------------------------------------------------------------------------
+# Internal depends within Sensors
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SNS_DEBUG_DSPS',
+   'SNS_EVMGR',
+]
+env.RequireRestrictedApi(SENSORS_API)
+
+#-------------------------------------------------------------------------------
+# Headers required by SNA OSA
+#-------------------------------------------------------------------------------
+DAL_UCOS_API = [
+   'DAL',
+]
+env.RequireRestrictedApi(DAL_UCOS_API)
+env.RequirePublicApi(DAL_UCOS_API)
+if env.has_key('SNS_BLAST'):
+	env.Append(CPPPATH = [
+	   "${BUILD_ROOT}/core/api/sensors",
+	   "${BUILD_ROOT}/Sensors/common/inc",
+	   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+	   "${BUILD_ROOT}/Sensors/modem/blast/inc",
+	])
+else:
+	env.Append(CPPPATH = [
+	   "${BUILD_ROOT}/Sensors/api",
+	   "${BUILD_ROOT}/Sensors/common/inc",
+	   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+	])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+MEMMGR_SOURCES = [
+      '${BUILDPATH}/memprof.c',
+      '${BUILDPATH}/oi_debug.c',
+      '${BUILDPATH}/oi_memmgr.c',
+      '${BUILDPATH}/oi_utils.c',
+      '${BUILDPATH}/mem_cfg.c',
+      '${BUILDPATH}/mem_cfg_frag1.c',
+      '${BUILDPATH}/sns_memmgr.c',
+   ]
+   
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # Sources that should not be shared
+   MEMMGR_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/common/util/memmgr/src')
+   MEMMGR_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/common/util/memmgr/inc')
+   MEMMGR_CLEAN_SOURCES += ['${BUILD_ROOT}/Sensors/common/util/memmgr/inc/mem_cfg.h']
+	
+   # Add binary library
+   if env.has_key('SNS_BLAST'):
+      memmgr_lib = env.AddBinaryLibrary(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'],
+      "${BUILDPATH}/MEMMGR", MEMMGR_SOURCES)
+		
+      # Clean sources
+      env.CleanPack(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], MEMMGR_CLEAN_SOURCES)
+		
+   else:
+      memmgr_lib = env.AddBinaryLibrary(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 
+      'CORE_QDSP6_SENSOR_SW'],
+      "${BUILDPATH}/MEMMGR", MEMMGR_SOURCES)
+		
+      # Clean sources
+      env.CleanPack(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 
+      'CORE_QDSP6_SENSOR_SW'], MEMMGR_CLEAN_SOURCES)
+else:
+   memmgr_lib = env.Library('${BUILDPATH}/MEMMGR', MEMMGR_SOURCES)
+   if env.has_key('SNS_BLAST'):
+      env.AddLibsToImage(
+      ['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE',
+      'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'],
+      memmgr_lib)
+   else:
+      env.AddLibsToImage(
+      ['MODEM_IMAGE', 'CBSP_MODEM_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'],
+      memmgr_lib)

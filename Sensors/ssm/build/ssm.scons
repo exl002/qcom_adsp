@@ -1,0 +1,36 @@
+#===============================================================================
+#
+# SSM Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2014 Qualcomm Technologies, Inc.  All Rights Reserved.
+# Qualcomm Technologies Proprietary and Confidential.
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/ssc.adsp/2.4.1/adsp_proc/Sensors/ssm/build/ssm.scons#1 $
+#  $DateTime: 2014/05/16 10:56:56 $
+#  $Author: coresvc $
+#  $Change: 5907808 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 27-01-14   dK      initial version
+#===============================================================================
+
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Internal depends within Sensors
+#-------------------------------------------------------------------------------
+
+env.RequirePublicApi( ['SERVICES'] )
+
+env.LoadSoftwareUnits()

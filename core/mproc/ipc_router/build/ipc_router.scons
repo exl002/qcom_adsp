@@ -1,0 +1,142 @@
+#===============================================================================
+#
+# IPC ROUTER Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2010 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/core/pkg/2H09/halcyon_modem/main/latest/AMSS/products/7x30/core/mproc/oncrpc/build/SConscript#11 $
+#  $DateTime: 2010/09/22 18:42:11 $
+#  $Author: coresvc $
+#  $Change: 1450404 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/mproc/ipc_router/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([
+   'DSM',
+   'MODEM_DATA',
+   'MODEM_HDR',
+])
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'BOOT',
+   'DEBUGTOOLS',
+   'HAL',
+   'DAL',
+   'MPROC',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'WIREDCONNECTIVITY',
+   'DSM',
+
+   # needs to be last also contains wrong comdef.h
+   'KERNEL',   
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Device configuration
+#-------------------------------------------------------------------------------
+if env['CHIPSET'].lower().find("mdm") == 0:
+   devcfg_xml_file = "${BUILD_ROOT}/core/mproc/ipc_router/config/IPCRtrDevCfg_mdm.xml"
+else:
+   devcfg_xml_file = "${BUILD_ROOT}/core/mproc/ipc_router/config/IPCRtrDevCfg_msm.xml"
+
+if 'USES_DEVCFG' in env:
+   env.AddDevCfgInfo(['DAL_DEVCFG_IMG'], {'devcfg_xml' : devcfg_xml_file})
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+IPC_ROUTER_SOURCES = [
+   '${BUILDPATH}/ipc_router_core.c',
+   '${BUILDPATH}/ipc_router_protocol.c',
+   '${BUILDPATH}/ipc_router_database.c',
+   '${BUILDPATH}/ipc_router_packet.c',
+   '${BUILDPATH}/ipc_router_log.c',
+   '${BUILDPATH}/ipc_router_init.c',
+   '${BUILDPATH}/ipc_router_policy.c',
+]
+
+IPC_ROUTER_XAL_SMDL_SOURCES = [
+   '${BUILDPATH}/ipc_router_xal_smdl_common.c',
+   "${BUILDPATH}/ipc_router_xal_smdl_qurt.c"
+]
+
+IPC_ROUTER_QDI_DRIVER_SOURCES = [
+   '${BUILDPATH}/ipc_router_qdi_driver.c',
+]
+
+IPC_ROUTER_QDI_USER_SOURCES = [
+   '${BUILDPATH}/ipc_router_qdi_user.c',
+]
+
+if 'USES_QURTOS_IMG' in env:
+   env.Append(CPPDEFINES=['FEATURE_IPC_ROUTER_QDI_DRIVER'])
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+GUEST_OS_IMAGES = ['QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SW']
+SENSOR_IMAGES = ['CORE_QDSP6_SENSOR_SW']
+
+env.AddLibrary(GUEST_OS_IMAGES, '${BUILDPATH}/ipc_router_core', IPC_ROUTER_SOURCES)
+env.AddLibrary(GUEST_OS_IMAGES, '${BUILDPATH}/ipc_router_xal_smdl', IPC_ROUTER_XAL_SMDL_SOURCES)
+if 'USES_QURTOS_IMG' in env:
+   env.AddLibrary(GUEST_OS_IMAGES, '${BUILDPATH}/ipc_router_qdi_driver', IPC_ROUTER_QDI_DRIVER_SOURCES)
+env.AddLibrary(SENSOR_IMAGES, '${BUILDPATH}/ipc_router_qdi_user', IPC_ROUTER_QDI_USER_SOURCES)
+
+#-------------------------------------------------------------------------------
+
+if 'USES_RCINIT' in env:
+   RCINIT_IMG = ['CORE_MODEM', 'CORE_QDSP6_SW', 'CORE_GSS']
+   env.AddRCInitFunc(           # Code Fragment in TMC: NO
+    RCINIT_IMG,                 # define TMC_RCINIT_INIT_IPC_ROUTER_INIT
+    {
+     'sequence_group'             : 'RCINIT_GROUP_0',                   # required
+     'init_name'                  : 'ipc_router',                       # required
+     'init_function'              : 'ipc_router_init',                  # required
+     'dependencies'               : ['sio','smd','smem_log']
+    })
+   env.AddRCInitFunc(           # Code Fragment in TMC: NO
+    ['CORE_QDSP6_SENSOR_SW'],   # define TMC_RCINIT_INIT_QMI_FW_INIT
+    {
+     'sequence_group'             : 'RCINIT_GROUP_0',                   # required
+     'init_name'                  : 'ipc_router_user',                  # required
+     'init_function'              : 'ipc_router_qdi_init',              # required
+     'dependencies'               : []
+    })
+
+
+

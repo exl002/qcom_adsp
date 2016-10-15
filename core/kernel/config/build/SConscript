@@ -1,0 +1,86 @@
+#===============================================================================
+#                    Copyright 2011 QUALCOMM Incorporated.
+#                           All Rights Reserved.
+#                         QUALCOMM Proprietary/GTDR
+#===============================================================================
+# BLAST customer configuration library
+#-------------------------------------------------------------------------------
+import os
+Import('env')
+env = env.Clone()
+
+
+#-------------------------------------------------------------------------------
+# Load dal config builders
+#-------------------------------------------------------------------------------
+env.Tool('custconfig_builder', toolpath = ['.'])
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${COREBSP_ROOT}/kernel/config"
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+env['QURT_FLAVOR'] = 'ADSPv5MP'
+
+env.Replace(QDSP6_SCRIPT_DIR = "${COREBSP_ROOT}/kernel/qurt/install_again/${QURT_FLAVOR}/scripts")
+
+#-------------------------------------------------------------------------------
+# External depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([])
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequirePublicApi([])
+env.RequireRestrictedApi([])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+if env['MSM_ID'] in ['8974']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/msm8974/qdsp6.xml"
+elif env['MSM_ID'] in ['9x25']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/mdm9x25/qdsp6.xml"
+elif env['MSM_ID'] in ['8x26']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/msm8x26/qdsp6.xml"
+elif env['MSM_ID'] in ['8092']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/mpq8092/qdsp6.xml"
+elif env['MSM_ID'] in ['8x10']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/msm8x10/qdsp6.xml"
+elif env['MSM_ID'] in ['8962']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/msm8962/qdsp6.xml"
+elif env['MSM_ID'] in ['8084']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/apq8084/qdsp6.xml"
+elif env['MSM_ID'] in ['9x35']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/mdm9x35/qdsp6.xml"
+elif env['MSM_ID'] in ['8092']:
+   cust_config_xml = "${BUILD_ROOT}/build/chipset/apq8092/qdsp6.xml"
+else:
+   cust_config_xml = "${BUILD_ROOT}/build/ms/cust_config.xml"
+
+if "HCBSP" in env:
+	new_cust_config = "${BUILD_ROOT}/core/apttests/cust_config/qdsp6.xml"
+	env.Command (new_cust_config, cust_config_xml, "python ${BUILD_ROOT}/core/apttests/cust_config/reduce_heap_size.py $SOURCE $TARGET")
+	cust_config_xml = new_cust_config
+cust_config_objname = "${BUILDPATH}/cust_config.o"
+cust_config_obj = env.CustConfigBuilder(cust_config_objname, cust_config_xml)
+cust_config_lib = env.Library('${BUILDPATH}/cust_config', cust_config_obj)
+
+#-------------------------------------------------------------------------------
+# Add T32 support to the Menu builder
+#-------------------------------------------------------------------------------
+T32PATH= env['BUILD_ROOT'] + '/core/kernel/qurt/install_again/${QURT_FLAVOR}/debugger/T32'
+
+try:
+   env.AddCMMScripts ('ADSP', [T32PATH], { 'qurt_model.men' : 'QuRT Menu', 'qurt_model.t32' : 'QuRT Extension' }, 'Kernel')
+except:
+   pass
+
+#-------------------------------------------------------------------------------
+# Add Objects/Libraries to image
+#-------------------------------------------------------------------------------
+env.AddLibsToImage(
+   ['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+    'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], cust_config_lib)

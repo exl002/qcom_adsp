@@ -1,0 +1,82 @@
+#===============================================================================
+#
+# QMD Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2014 by Qualcomm Technologies, Inc.  All Rights Reserved
+# Qualcomm Technologies Proprietary and Confidential
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header:  $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 2013-10-20  ad     update compiler optimization
+# 12/02/2012  ag     Add multi PD support
+# 03/24/2011  ag     Enabling generation of library in internal build and
+#                    using existing library for customer builds
+# 12/22/2010  pg     Update for accessing UCOS header files from DALSYS. 
+# 08-17-10    ad     initial version
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/qmd/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+env.Append(CCFLAGS = " -O2 ")
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/qmd/inc",
+])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+QMD_SOURCES = [
+      '${BUILDPATH}/qmd.c',
+   ]
+   
+algoqmd_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                    '${BUILDPATH}/sam_algo_qmd',
+                                    QMD_SOURCES)
+
+# always clean sources
+QMD_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/qmd/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   QMD_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/qmd/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], QMD_CLEAN_SOURCES)	

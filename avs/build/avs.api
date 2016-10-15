@@ -1,0 +1,46 @@
+#===============================================================================
+#
+# AVS APIs
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+env.PublishPublicApi('AVS',[
+   '${INC_ROOT}/avs/elite/qurt_elite/inc',
+  '${INC_ROOT}/avs/elite/utils/inc',
+   ])
+
+env.PublishRestrictedApi('AVS',[
+   '${INC_ROOT}/avs/elite/qurt_elite/inc',
+   '${INC_ROOT}/avs/aud/common/audio_cmn_inc',
+   '${INC_ROOT}/avs/elite/utils/inc',
+   '${INC_ROOT}/avs/adsp_license_db/inc',
+   '${INC_ROOT}',
+   ])
+   
+
+if 'AVS_TEST' in env:
+    env.Append(CFLAGS = '-DADSP_TEST_ENTRY -DSIM -DSIM_DEFINED')
+
+env.LoadAPIUnits()

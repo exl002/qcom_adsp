@@ -1,0 +1,106 @@
+#===============================================================================
+#
+# QMD Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2013-2014 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/ssc.adsp/2.4.1/adsp_proc/Sensors/sam/algo/smd/build/smd.scons#1 $
+#  $DateTime: 2014/05/16 10:56:56 $
+#  $Author: coresvc $
+#  $Change: 5907808 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 2013-10-20  ad     update compiler optimization
+# 06/25/2013  ps     update require method for Public APIs
+# 06/05/2013  pd     Ported algo from DSPS to ADSP
+# 05/13/2013  pd	 Added compiler optimization for time instead of space
+# 03/11/2013  pd     Initial version
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+env.Append(CCFLAGS = " -O2 ")
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/smd/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+#env.Replace(ARMCC_OPT = " ${ARM_OPT_TIME} -O3 ")
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'MPROC',
+]
+
+env.RequirePublicApi(CBSP_API, area='core')
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SNS_SMR',
+   'SNS_MEMMGR',
+   'SNS_EVMGR',
+   'SNS_COMMON',
+   'SNS_DEBUG_DSPS',
+   'SNS_INT_SRVC'
+]
+
+env.RequireRestrictedApi(SENSORS_API)
+
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/smd/inc",
+])
+
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcci",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   ])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+SMD_SOURCES = [
+      '${BUILDPATH}/smd_algo.c',
+   ]
+
+algoqmd_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                    '${BUILDPATH}/sam_algo_smd',
+                                    SMD_SOURCES)
+
+# always clean sources
+SMD_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/smd/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   SMD_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/smd/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], SMD_CLEAN_SOURCES)

@@ -1,0 +1,108 @@
+#===============================================================================
+#
+# Sensors APIs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2011 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime: $
+#  $Author: $
+#  $Change: $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 04-15-11   sj      Added path for power manager service header file
+# 02-08-11   ag      Provide path to share with other core bsp modules
+# 01-28-11   ag      Updated to handle change in debug folder
+# 09-21-10   jtl     Created initial restricted sensors APIs and public SENSOR1
+#===============================================================================
+Import('env')
+
+env.PublishPublicApi('SENSORS', [
+   "${INC_ROOT}/core/api/sensors",
+])
+
+env.PublishPublicApi('SENSOR1', [
+   "${BUILD_ROOT}/Sensors/api",
+])
+
+env.PublishPublicApi('BOOT', [
+   "${INC_ROOT}/core/api/boot",
+])
+
+env.PublishPublicApi('DEBUGTOOLS', [
+   "${INC_ROOT}/core/api/debugtools",
+])
+
+env.PublishPublicApi('DAL', [
+   "${INC_ROOT}/core/api/dal",
+])
+
+env.PublishRestrictedApi('HAL', [
+   "${INC_ROOT}/core/api/hal",
+])
+
+#-------------------------------------------------------------------------------
+# Publish Restricted APIs
+# These are for internal Sensors use
+#-------------------------------------------------------------------------------
+env.PublishRestrictedApi('SENSORS', [
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/debug/inc",
+])
+
+# SMR
+env.PublishRestrictedApi('SNS_SMR', [
+   "${INC_ROOT}/Sensors/common/smr/inc",
+])
+
+
+# QUEUE
+env.PublishRestrictedApi('SNS_QUEUE', [
+   "${BUILD_ROOT}/Sensors/common/util/queue/inc",
+])
+
+
+# Memory manager
+env.PublishRestrictedApi('SNS_MEMMGR', [
+   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+])
+
+#SNS util-miscellaneous
+env.PublishRestrictedApi('SNS_UTIL_MISC', [
+   "${BUILD_ROOT}/Sensors/common/util/misc/inc",
+])
+
+# Event manager
+env.PublishRestrictedApi('SNS_EVMGR', [
+   "${BUILD_ROOT}/Sensors/evmgr/inc",
+])
+
+
+# SNS common
+env.PublishRestrictedApi('SNS_COMMON', [
+   "${BUILD_ROOT}/Sensors/common/inc",
+])
+
+env.PublishRestrictedApi('SNS_DEBUG_DSPS', [
+   "${BUILD_ROOT}/Sensors/debug/inc",
+])
+
+# SNS Internal Services (e.g Power Manager Service)
+env.PublishRestrictedApi('SNS_INT_SRVC', [
+   "${BUILD_ROOT}/Sensors/common/idl/inc",
+])
+
+
+env.LoadAPIUnits()

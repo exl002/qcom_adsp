@@ -1,0 +1,157 @@
+;****************************************************************
+; filename: DSP_timestamp_check.cmm
+;
+;****************************************************************
+;LOCAL &ramdumpfile &smddumpfile
+;LOCAL &f3logpath &ulogpath
+;LOCAL &ADSP_BUILDROOT
+;entry &choice 
+
+;TOOLBAR ON
+;STATUSBAR ON
+
+ENTRY &Target_Name &ramdumpfile &OutputPath &ADSP_BUILDROOT &CurrentDirectory &Customer_Elf_Path &smmu_enable
+
+global &ramdumpstartadd
+global &choice
+global &CurrentDirectory
+global &ADSP_BUILDROOT
+global &Target_Name
+
+;LOCAL &ramdumpstartaddramdumpstartadd
+
+area.close
+winclear
+reset
+
+;WINPOS 10% 10% 80% 80% 0. 0. A000
+area.create A000
+area.open A000 &OutputPath\areainfo.txt
+WINPOS 10% 10% 80% 80% 0. 0. A000
+;area.view A000 
+area.select A000
+
+
+sys.u
+
+;print "PLEASE ENTERT ADSP image START ADDRESS: (eg: 0x00000000)" 
+;print " "
+;print " "
+;print " "
+;print " "
+;enter &adspstartadd 
+
+OPEN #1 "&OutputPath\binarylength.txt" /READ
+READ #1 %line &BinaryLength
+CLOSE #1 
+
+print "The length of Binary provided is &BinaryLength"
+
+
+OPEN #1 "&OutputPath\adspstartaddr.txt" /READ
+READ #1 %line &adspstartadd 
+CLOSE #1
+
+if (&adspstartadd==0)
+(
+  print " Only LPASS dumps detected "
+  print "PLEASE ENTERT ADSP image START ADDRESS: (eg: 0x00000000)" 
+  print " "
+  print " "
+  print " "
+  print " "
+  enter &adspstartadd 
+ ) 
+  
+print "ADSP start address Provided is  &adspstartadd "
+
+OPEN #1 "&OutputPath\dumpformant.txt" /READ
+READ #1 %line &choice 
+CLOSE #1
+
+
+
+
+if (&BinaryLength>52428800)
+(
+ &ramdumpstartadd=0x00000000
+)
+else 
+(
+ &ramdumpstartadd=&adspstartadd
+)
+
+
+print "RAM dump start address &ramdumpstartadd"
+print "ADSP image start address &adspstartadd"
+print "Customer address &Customer_Elf_Path"
+;cd &ADSP_BUILDROOT/adsp_proc
+cd &CurrentDirectory
+
+do DSP_connect_memdump_MPD.cmm &ramdumpfile &ramdumpstartadd &adspstartadd &OutputPath &ADSP_BUILDROOT &Target_Name &CurrentDirectory &Customer_Elf_Path
+
+cd &CurrentDirectory
+do analy_qurt_error.cmm
+do DSP_load_pagetables.cmm c:\t32
+
+
+; APR logs
+data.save.binary &OutputPath\your_dumpfile1.bin v.range(apr_log_history)
+&command="hist_parser.exe &OutputPath\your_dumpfile1.bin"
+printer.open "&OutputPath\apr_logs.txt"
+wp.OS.window &command
+printer.close
+
+
+
+;do qdsp6\scripts\mdm9x25\DSP_connect_memdump.cmm &ramdumpfile &ramdumpstartadd 0x02000000
+;do qdsp6\scripts\mdm9x25\analy_qurt_error.cmm
+
+;cd &ADSP_BUILDROOT/adsp_proc
+;cd qdsp6\scripts
+
+do recover_f3.cmm &OutputPath
+;cd ../..
+
+do ULogDump_QuRTMPD.cmm &OutputPath &ELF_reloc
+
+
+if "&smmu_enable"=="1"
+(
+
+do DSP_load_pagetables.cmm &OutputPath
+print "Before"
+&command="ADSP_SMMU.py &OutputPath "
+wp.OS.window "&command"
+print " After"
+do &OutputPath\DSP_smmu_pagetables.cmm
+print "SMMU page table loaded on T32 "
+
+)
+
+
+
+do DSP_dump_info.cmm &OutputPath &CurrentDirectory &Target_Name
+
+
+; --------------- heap check script ------------------------------
+
+
+printer.file &OutputPath\dsp_def_heap.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+area.create heap
+;area.view  heap
+
+
+cd &CurrentDirectory
+
+
+
+
+
+
+
+
+
+

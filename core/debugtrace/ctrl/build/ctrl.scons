@@ -1,0 +1,58 @@
+#===============================================================================
+#
+# GENERAL DESCRIPTION
+#    Build script for QDSS ctrl library
+#
+# Copyright (c) 2013 Qualcomm Technologies Incorporated.
+# All rights reserved.
+# Qualcomm Confidential and Proprietary
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/core.adsp/2.2/debugtrace/ctrl/build/ctrl.scons#1 $
+#
+
+Import('env')
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "../src"
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+env.RequirePublicApi(['DEBUGTRACE','DAL','SERVICES','KERNEL'])
+env.RequireRestrictedApi(['DEBUGTRACE'])
+env.RequireProtectedApi(['DEBUGTRACE'])
+
+
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+QDSS_CTRL_SRC = [
+   '${BUILDPATH}/qdss_ctrl_diag.c',
+   '${BUILDPATH}/qdss_ctrl.c',
+   '${BUILDPATH}/qdss_ctrl_etm_qurt.c'
+]
+
+env.AddLibrary(['CORE_MODEM','MODEM_IMAGE','CBSP_MODEM_IMAGE', 'CORE_QDSP6_SW'],
+   '${BUILDPATH}/qdss_ctrl',QDSS_CTRL_SRC)
+
+
+if env.IsTargetEnable(['CORE_MODEM','MODEM_IMAGE','CBSP_MODEM_IMAGE']):
+  env.Append(CCFLAGS = " -DQDSS_CTRL_DIAG_PROC_ID=0x0200")
+elif env.IsTargetEnable(['CORE_QDSP6_SW']):
+  env.Append(CCFLAGS = " -DQDSS_CTRL_DIAG_PROC_ID=0x0500")
+
+
+if 'USES_RCINIT' in env:
+  env.AddRCInitFunc(      
+    ['CORE_MODEM','MODEM_IMAGE','CBSP_MODEM_IMAGE', 'CORE_QDSP6_SW'],
+    {
+      'sequence_group'          : 'RCINIT_GROUP_1',  
+      'init_name'               : 'qdss_ctrl',    
+      'init_function'           : 'qdss_ctrl_init', 
+      'dependencies'            : ['dalsys','diag','npa']
+      })
+

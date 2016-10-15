@@ -1,0 +1,179 @@
+#===============================================================================
+#
+# SMGR Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2014 by Qualcomm Technologies, Inc.  All Rights Reserved
+# Qualcomm Technologies Proprietary and Confidential
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/ssc.adsp/2.4.1/adsp_proc/Sensors/smgr/build/smgr.scons#1 $
+#  $DateTime: 2014/05/16 10:56:56 $
+#  $Author: coresvc $
+#  $Change: 5907808 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 04/01/2004  DC     Added cleanpack rules for HD11 package
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 08/09/2013  pn     Added KERNEL public API dependency
+# 06/25/2013  ps     update require method for Public APIs
+# 01/29/2013  hw     Add profiling support
+# 12/03/2012  pn     List of source files is programmatically built.
+# 12/02/2012  ag     Add multi PD support
+# 11/08/2012  sc     Merged from DSPS 1.1; removed qmi ping client from build
+# 08/22/2012  sc     Added smgr_qmi_ping_clnt.c into the build (from Amolika)
+# 08/10/2012  sc     Added sns_smgr_irq.c into the build
+# 07/29/2012  ag     Adding QMI support
+# 07/18/2011  br     Added sns_smgr_sensor_config.c
+# 07/01/2011  agk    Added BUSES to dependency.
+# 05/04/2011  jb     Add init file to be located in DDR memory
+# 04/17/2011  jh     Move target independent source files to common folder
+# 03/17/2011  jh     Compile sns_smgr_test.c only in test builds
+# 12/22/2010  pg     Update for accessing UCOS header files from DALSYS. 
+#
+#===============================================================================
+Import('env')
+import os
+from glob import glob
+from os.path import join, basename
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'BUSES',
+   'KERNEL',
+   'MPROC',
+   'SERVICES',
+   'SNS_INT_SRVC',
+   'POWER',
+   'DAL',
+   'SYSTEMDRIVERS',
+]
+
+
+env.RequirePublicApi(CBSP_API, area='core')
+
+#-------------------------------------------------------------------------------
+# Internal depends within Sensors
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SNS_SMR',
+   'SNS_QUEUE',
+   'SNS_MEMMGR',
+   'SNS_EVMGR',
+   'SNS_COMMON',
+   'SNS_DEBUG_DSPS',
+]
+
+env.RequireRestrictedApi(SENSORS_API)
+
+#-------------------------------------------------------------------------------
+# Headers required by SNA OSA
+#-------------------------------------------------------------------------------
+DAL_UCOS_API = [
+   'DAL',
+]
+env.RequireRestrictedApi(DAL_UCOS_API)
+env.RequirePublicApi(DAL_UCOS_API)
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/smgr/src"
+
+#if not env.SubstPathExists(SRCPATH):
+#   # Legay Path
+#   SRCPATH = "${BUILD_ROOT}/sensors/dsps"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/queue/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/smr/inc",
+   "${BUILD_ROOT}/core/api/mproc",
+   "${BUILD_ROOT}/core/mproc/qmi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   "${BUILD_ROOT}/Sensors/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/smgr/src/common",
+   "${BUILD_ROOT}/Sensors/smgr/src/${MSM_ID}",
+   "${BUILD_ROOT}/Sensors/smgr/inc",
+   "${BUILD_ROOT}/Sensors/dd/qcom/inc",
+   "${BUILD_ROOT}/Sensors/profiling/inc",
+   "${BUILD_ROOT}/Sensors/ddf/inc",
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/idl/inc",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcci",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   "${BUILD_ROOT}/core/api/systemdrivers/pmic",
+   "${BUILD_ROOT}/Sensors/playback/inc",
+])
+
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+LIB_SOURCES  = ['${BUILDPATH}/common/' + basename(fname)
+                for fname in glob(join(env.subst(SRCPATH), 'common/*.c'))]
+
+msm_id = env.subst(os.getenv('MSM_ID'))
+LIB_SOURCES += ['/'.join(['${BUILDPATH}', msm_id, basename(fname)])
+                for fname in glob('/'.join([env.subst(SRCPATH), msm_id, '*.c']))]
+
+TEST_SOURCES = ['${BUILDPATH}/common/sns_smgr_test.c',
+                '${BUILDPATH}/common/sns_smgr_test_main.c',]
+
+[LIB_SOURCES.remove(f) for f in TEST_SOURCES if f in LIB_SOURCES]
+
+#print '\n'.join(["%s" % i for i in LIB_SOURCES])  #for debugging
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # Sources that should not be shared
+   SMGR_CLEAN_SOURCES = env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/common')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8974')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8084')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8962')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8x26')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8994')
+   SMGR_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/smgr/inc')
+	
+   # Add binary library
+   sns_smgr_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'],
+   "${BUILDPATH}/smgr", LIB_SOURCES)
+	
+   # Clean sources
+   env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], SMGR_CLEAN_SOURCES)
+else:
+
+   CLEAN_LIST=[]
+   CLEAN_LIST.extend(env.FindFiles(['*.*'], '${BUILD_ROOT}/Sensors/smgr/src/8x26'))
+   env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], CLEAN_LIST)
+   sns_smgr_lib = env.Library( '${BUILDPATH}/smgr', LIB_SOURCES)
+   env.AddLibsToImage(
+   ['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'],
+   sns_smgr_lib)
+
+   #env.AddLibsToImage(
+   #   ['CBSP_QDSP6_SW_IMAGE'],
+   #  sns_smgr_no_opt_lib)
+

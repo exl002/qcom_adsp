@@ -1,0 +1,89 @@
+entry &loc
+printer.file &loc\dsp_QT.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.tasklist
+printer.file &loc\dsp_FT.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.ftxlist
+printer.file &loc\dsp_IN.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.irql
+printer.file &loc\dsp_MM.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.memlist
+printer.file &loc\dsp_DB.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.dbg
+printer.file &loc\dsp_MB.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.task.tracelist 7
+printer.file &loc\dsp_analysis.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.area IO
+printer.file &loc\dsp_vf_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.v.f
+thread 1
+wp.v.f
+thread 2
+wp.v.f 
+printer.file &loc\dsp_code_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.d.l
+thread 1
+wp.d.l
+thread 2
+wp.d.l 
+printer.file &loc\dsp_reg_0.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+thread 0
+wp.register
+thread 1
+wp.register
+thread 2
+wp.register
+printer.file &loc\dsp_mmu.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.mmu.list
+printer.file &loc\dsp_qurt_status.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v (int)QURT_system_state
+printer.file &loc\dsp_smd_info.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+wp.v.v %open %string smd_info[2] smd_info[2].info.stream.tx_shared_info_ptr smd_info[2].info.stream.rx_shared_info_ptr smd_info[3] smd_info[3].info.stream.tx_shared_info_ptr smd_info[3].info.stream.rx_shared_info_ptr smd_info[4] smd_info[4].info.stream.tx_shared_info_ptr smd_info[4].info.stream.rx_shared_info_ptr smd_info[5] smd_info[5].info.stream.tx_shared_info_ptr smd_info[5].info.stream.rx_shared_info_ptr smd_info[6] smd_info[6].info.stream.tx_shared_info_ptr smd_info[6].info.stream.rx_shared_info_ptr smd_info[7] smd_info[7].info.stream.tx_shared_info_ptr smd_info[7].info.stream.rx_shared_info_ptr smd_info[8] smd_info[8].info.stream.tx_shared_info_ptr smd_info[8].info.stream.rx_shared_info_ptr smd_info[9] smd_info[9].info.stream.tx_shared_info_ptr smd_info[9].info.stream.rx_shared_info_ptr smd_info[10] smd_info[10].info.stream.tx_shared_info_ptr smd_info[10].info.stream.rx_shared_info_ptr
+printer.file &loc\dsp_timestamp.txt
+printer.filetype ascii
+printer.size 0xfa,0xfa
+area.create timestamp
+area.view timestamp
+area.create timestamp
+do qdsp6\scripts\msm8974\DSP_timestamp_check.cmm
+wp.area timestamp
+
+
+
+
+
+
+
+
+
+
+
+
+

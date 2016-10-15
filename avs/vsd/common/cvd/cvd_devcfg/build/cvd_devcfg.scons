@@ -1,0 +1,65 @@
+#===============================================================================
+#
+# CVD DEVCFG SCONS
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (C) 2013 QUALCOMM Technologies Incorporated.
+# All rights reserved.
+# Qualcomm Confidential and Proprietary
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/images/adsp/avs/rel/2.2/adsp_proc/avs/vsd/common/cvd/cvd_devcfg/build/cvd_devcfg.scons#5 $
+#  $DateTime: 2013/10/10 17:40:50 $
+#  $Author: coresvc $
+#  $Change: 4583762 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+env.Append(CFLAGS = '-DMSG_BT_SSID_DFLT=MSG_SSID_AVS')
+
+core_public_apis = [
+   'DEBUGTOOLS',
+   'KERNEL',
+   'POWER',
+   'SERVICES',
+   ]
+
+env.RequireRestrictedApi('AVS')
+env.RequireProtectedApi('AVS')
+env.RequirePublicApi(core_public_apis, area='core')
+
+#-------------------------------------------------------------------------------
+# DEVCFG
+#-------------------------------------------------------------------------------
+   
+if 'USES_DEVCFG' in env:
+      DEVCFG_IMG = ['DAL_DEVCFG_IMG']
+      env.AddDevCfgInfo(DEVCFG_IMG, 
+      {
+      '8974_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.c'],
+      '8x26_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.c'],
+      '8x10_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.c'],
+      '8084_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.c'],
+      '8962_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/msm8974/cvd_devcfg.c'],
+      '9x25_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/mdm9x25/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/mdm9x25/cvd_devcfg.c'],
+      '9x35_xml' : ['${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/mdm9x35/cvd_devcfg.xml',
+                    '${BUILD_ROOT}/avs/vsd/common/cvd/cvd_devcfg/mdm9x35/cvd_devcfg.c']
+      })
+

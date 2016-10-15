@@ -1,0 +1,39 @@
+ADD 
+MENU 
+( 
+	POPUP "[:CORRELATE]&CoreBSP Scripts" 
+	( 
+	POPUP "[:PSTEP]&Dal" 
+	( 
+		MENUITEM "[:FLASH]&DAL Log" 
+		( 
+			CD &ADSP_SCRIPTSDIR
+			cd.do ../dal/sys/scripts/DALLog.cmm 
+		)
+	)
+	POPUP "[:PSTEP]&Hwengines" 
+	( 
+		MENUITEM "[:FLASH]&Setup BAM Scripts" 
+		( 
+			CD &ADSP_SCRIPTSDIR
+			cd.do ../hwengines/bam/scripts/bamsetup.cmm 8974
+		)
+	)
+	POPUP "[:PSTEP]&Kernel" 
+	( 
+	)
+	POPUP "[:PSTEP]&Systemdrivers" 
+	( 
+		MENUITEM "[:CHIP]&HWIO" 
+		( 
+			CD &ADSP_SCRIPTSDIR
+			per.view ../systemdrivers/hwio/scripts/msm8974/hwioreg.per 
+		)
+		MENUITEM "[:FLASH]&TLMM" 
+		( 
+			CD &ADSP_SCRIPTSDIR
+			cd.do ../systemdrivers/tlmm/scripts/tlmm_gpio_hw.cmm 
+		)
+	)
+	) 
+)

@@ -1,0 +1,194 @@
+#===============================================================================
+#
+# Target-Level Build Script for Modem Processor
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspbuild.adsp/2.2/bsp/sensor_img/build/sensor_img.scons#4 $
+#  $DateTime: 2013/07/26 15:03:10 $
+#  $Change: 4171534 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+import sys
+import os
+Import('env')
+
+env = env.Clone()
+
+#------------------------------------------------------------------------------
+# Check if we need to load this script or just bail-out
+#------------------------------------------------------------------------------
+# alias first alias is always the target then the other possibles
+aliases = ['sensor_img', 'adsp_mpd_images', 'adsp_mpd_core_images',
+           'msm8974_MPD', 'msm8x26_MPD', 'apq8084_MPD', 'msm8962_MPD',
+		   'msm8974_hcbsp_MPD', 'msm8x26_hcbsp_MPD'
+          ]
+
+# init environment variables
+env.InitImageVars(
+   alias_list=aliases,           # aliases
+   proc='qdsp6',              # proc
+   config='adsp',                # config type, proc_name
+   plat='qurt',
+   target='SENSOR_IMG_${BUILD_ID}',# target (elf, image file name)
+   build_tags = ['CORE_QDSP6_SENSOR_SW','QDSS_SENSOR_EN_IMG','QMIMSGS_ADSP'],
+   tools = ['buildspec_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/mbn_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/doc_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/dnt_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/devcfg_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/cmm_builder.py',
+            '${BUILD_ROOT}/core/bsp/build/scripts/swe_builder.py']
+
+   )
+
+
+if not env.CheckAlias(alias_list=aliases):
+   Return()
+   
+# Add defines
+env.Append(CPPDEFINES = [
+"LPASS_SENSOR_IMG"
+])
+
+#---------------------------------------------------------------------------
+# Now that we know we need to build something, the first thing we need
+# to do is add our image to BuildProducts.txt, so that tools can verify
+# when our build is successful.  Make sure we append, so that we don't
+# overwrite other images that have written to this file.
+#---------------------------------------------------------------------------
+#NG FOR MULTI PD IF REQUIRED WE CAN ADD SENSOR/ AUDIO ELFS
+#build_products_fn = env['TARGET_ROOT'] + "/BuildProducts.txt"
+#if not env.GetOption('clean'):
+#   fh = open(build_products_fn, "a")
+#   fh.write ("./adsp_proc/build/ms/bin/" + env['QC_SHORT_BUILDPATH'] + "/dsp2.mbn\n")
+#   fh.close()
+#else:
+#   if os.path.exists(build_products_fn):
+#      os.remove(build_products_fn)
+
+
+#---------------------------------------------------------------------------
+# Load in CBSP uses and path variables
+#---------------------------------------------------------------------------
+env.InitBuildConfig()
+env.Replace(USES_SENSOR_IMG = 'yes')
+env.Replace(USES_DEVCFG = 'yes')
+env.Replace(DEVCONFIG_ASSOC_FLAG = 'DEVCFG_CORE_QDSP6_SENSOR_SW')
+
+#if image wants to own "main": # image calls core_main to init cbsp
+env.Append(CPPDEFINES=["COREMAIN_EXCLUDE_MAIN"])
+env.Append(CPPDEFINES=["MULTI_PD_BUILD"])
+
+env.AddUsesFlags(['USES_STACK_PROTECTION_ENABLED'])
+#---------------------------------------------------------------------------
+# Load in the tools scripts
+#---------------------------------------------------------------------------
+env.Replace(QDSP6_LIBDIR = "${COREBSP_ROOT}/kernel/qurt/install_again/ADSPv5MP/lib")
+
+env.LoadToolScript('hexagon_adsp', toolpath = ['${BUILD_ROOT}/qdsp6/tools'])
+
+# the below change is to remove elite.linker. needs to be done in hexagon.py
+env.Replace(LINKFLAGS = "-m${Q6VERSION} --wrap malloc --wrap calloc --wrap free --wrap realloc --wrap memalign --wrap __stack_chk_fail -g -T${BUILD_ROOT}/Sensors/build/${CHIPSET}/sensors.linker -G0 -nostdlib --section-start .start=${HEXAGON_IMAGE_ENTRY} ${LFLAGS}")
+
+#Add sensor Image specific linker inputs here
+env.Replace(HEXAGON_IMAGE_ENTRY='0x2DA00000')
+env.Replace(QDSP6_LIBDIR = "${COREBSP_ROOT}/kernel/qurt/install_again/ADSPv5MP/lib")
+env.Replace(QDSP6OBJS1  = ['${QDSP6_LIBDIR}/crt1.o','${QDSP6_RELEASE_LIB_DIR}/init.o'])
+env.Replace(QDSP6OBJS3  = [
+         '${QDSP6_LIBDIR}/libqurt.a',
+         '${QDSP6_LIBDIR}/libqurtcfs.a',
+         '${QDSP6_LIBDIR}/libqube_compat.a',
+         '${QDSP6_LIBDIR}/libtimer.a',
+         '${QDSP6_LIBDIR}/libposix.a',
+         '${QDSP6_RELEASE_LIB_DIR}/libc.a',
+         '${QDSP6_RELEASE_LIB_DIR}/libqcc.a',
+         '${QDSP6_RELEASE_LIB_DIR}/libstdc++.a',
+         ])
+
+#G0 flag is required so that it is uniform. kernel libs are compiled with G0
+env.Replace(QDSP6_RELEASE_LIB_DIR="${QDSP6_RELEASE_DIR}/dinkumware/lib/${Q6VERSION}/G0")
+env.Append(CFLAGS = '-G0')
+
+if 'USES_STACK_PROTECTION_ENABLED' in env:
+    env.Append(CFLAGS='-fstack-protector')
+
+env.Replace(DYNLINKFLAGS = "")
+env.Tool('qdsp6_defs_adsp', toolpath = ['${BUILD_ROOT}/build/ms'])
+
+#---------------------------------------------------------------------------
+# Libs/Objs
+#---------------------------------------------------------------------------
+sensor_img_libs = []
+sensor_img_objs = []
+
+#---------------------------------------------------------------------------
+# Libraries Section
+#---------------------------------------------------------------------------
+
+# load Build Test libs/objs build rules. Add for sensor/audio(if scons) in future
+#au_items = env.LoadAreaSoftwareUnits('build_test')
+#sensor_img_libs.extend(au_items['LIBS'])
+#sensor_img_objs.extend(au_items['OBJS'])
+
+# load Core BSP libs/objs build rules.
+au_items = env.LoadAreaSoftwareUnits('core')
+sensor_img_libs.extend(au_items['LIBS'])
+sensor_img_objs.extend(au_items['OBJS'])
+
+#<--- Start AG
+# load QURT Elite libs/objs build rules.
+au_items = env.LoadAreaSoftwareUnits('avs')
+sensor_img_libs.extend(au_items['LIBS'])
+sensor_img_objs.extend(au_items['OBJS'])
+
+# load Sensors libs/obj build rules.
+au_items = env.LoadAreaSoftwareUnits('Sensors')
+sensor_img_libs.extend(au_items['LIBS'])
+sensor_img_objs.extend(au_items['OBJS'])
+
+#---> End AG
+
+# load QMI messages libs/objs build rules.
+if env.PathExists("${BUILD_ROOT}/qmimsgs"):
+   au_items = env.LoadAreaSoftwareUnits('qmimsgs')
+   sensor_img_libs.extend(au_items['LIBS'])
+   sensor_img_objs.extend(au_items['OBJS'])
+
+# load QDSP6 messages libs/objs build rules.
+# need stack protection object file goes to sensors image   
+if env.PathExists("${BUILD_ROOT}/qdsp6"):
+   au_items = env.LoadAreaSoftwareUnits('qdsp6')
+   sensor_img_libs.extend(au_items['LIBS'])
+   sensor_img_objs.extend(au_items['OBJS'])
+
+# Debug code for finding environment variables
+#for key in env.Dictionary():
+#   try:
+#      if type(env[key]) == str and env[key] in ["20201170", "AAABQMAAM", "AABBQMAAM", "7X30A", "M7X30", "7X30", "7x30", "7630"]:
+#         print "env['" + str(key) + "'] = " + str(env[key])
+#   except:
+#      print "Exception on key", key
+#      import pdb; pdb.set_trace()
+
+#------------------------------------------------------------------------------
+# Load in CBSP common build rules
+#------------------------------------------------------------------------------
+env.Replace(QCOREIMG_LIBS = sensor_img_libs)
+env.Replace(QCOREIMG_OBJS = sensor_img_objs)
+env.Replace(BUILD_ELF_EXTN = '_SENSOR_pre_reloc')
+env.Tool('platform_blast_adsp', toolpath = ['${BUILD_ROOT}/build/ms'])

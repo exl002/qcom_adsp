@@ -1,0 +1,89 @@
+#===============================================================================
+#
+# RCINIT
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2011 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/core/debugtools/task/main/latest/default/build/task.scons#5 $
+#
+#===============================================================================
+
+Import('env')
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+
+env.VariantDir('${BUILDPATH}', "${BUILD_ROOT}/core/debugtools/rcinit/src/", duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External Dependency Information
+#-------------------------------------------------------------------------------
+
+# NULL
+
+#-------------------------------------------------------------------------------
+# Internal Dependency Information
+#-------------------------------------------------------------------------------
+
+CBSP_API = [
+   'DAL',
+   'DEBUGTOOLS',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'KERNEL',   # needs to be last also contains wrong comdef.h
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+if not ('USES_DAL' in env):
+ env.Append(CPPDEFINES=['RCINIT_EXCLUDE_STARTUP_DALTASK'])
+
+if not ('USES_POSIX' in env):
+ env.Append(CPPDEFINES=['RCINIT_EXCLUDE_STARTUP_PTHREAD'])
+
+if not ('USES_QURT' in env):
+ env.Append(CPPDEFINES=['RCINIT_EXCLUDE_STARTUP_QURTTASK'])
+
+if not ('USES_REX' in env):
+ env.Append(CPPDEFINES=['RCINIT_EXCLUDE_STARTUP_REXTASK'])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+RCINIT_AUTOGEN = ( env.RcinitBuilder('${BUILDPATH}/rcinit_autogen.c', None))
+
+RCINIT_SOURCES = [
+    '${BUILDPATH}/rcinit.c',
+    RCINIT_AUTOGEN,
+]
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+RCINIT_IMG = [
+   'CORE_MODEM', 'CORE_QDSP6_SW', 'CORE_APPS', 'CORE_GSS', 'CORE_WCN',
+   'MODEM_MODEM','CORE_QDSP6_SENSOR_SW', 'CORE_QDSP6_AUDIO_SW']
+
+env.AddLibrary(RCINIT_IMG, '${BUILDPATH}/rcinit', RCINIT_SOURCES)
+
+env.AddRCInitTask( # BOOTSTRAP
+ RCINIT_IMG,
+  {
+   'sequence_group'             : 'RCINIT_GROUP_0',
+   'thread_name'                : 'rcinit',
+   'thread_entry'               : 'RCINIT_NULL',                     # NULL
+   'thread_type'                : 'RCINIT_TASK_DALTASK',
+   'stack_size_bytes'           : '6144', # (CORE_WCN : 2048)
+   'priority_amss_order'        : 'SHARED_DRIVER_SERVICE_PRI_ORDER',
+  })

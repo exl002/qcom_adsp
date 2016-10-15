@@ -1,0 +1,42 @@
+#===============================================================================
+#
+# Buses Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2011 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/core.adsp/2.2/buses/build/buses.scons#1 $
+#  $DateTime: 2013/04/03 17:22:53 $
+#  $Author: coresvc $
+#  $Change: 3569480 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Convert warnings to errors 
+#-------------------------------------------------------------------------------
+env.Append(CFLAGS = "-Werror ")
+
+
+#-------------------------------------------------------------------------------
+# Load sub scripts
+#-------------------------------------------------------------------------------
+
+env.LoadSoftwareUnits()
+

@@ -1,0 +1,113 @@
+#===============================================================================
+#
+# Game Rotation Vector
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2013-2014 Qualcomm Technologies, Inc.  All Rights Reserved.
+# Qualcomm Technologies Proprietary and Confidential.
+#-------------------------------------------------------------------------------
+#
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 06/25/2013  ps     update require method for Public APIs
+# 2013-06-03  tc     Initial version
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/game_rotation_vector/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'MPROC',
+]
+
+env.RequirePublicApi(CBSP_API, area='core')
+
+#-------------------------------------------------------------------------------
+# Headers required by SNA OSA
+#-------------------------------------------------------------------------------
+DAL_UCOS_API = [
+   'DAL',
+]
+env.RequireRestrictedApi(DAL_UCOS_API)
+env.RequirePublicApi(DAL_UCOS_API)
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SENSORS',
+   'SNS_SMR',
+   'SNS_MEMMGR',
+   'SNS_EVMGR',
+   'SNS_COMMON',
+   'SNS_DEBUG_DSPS',
+   'SNS_INT_SRVC'
+]
+
+env.RequireRestrictedApi(SENSORS_API)
+
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/idl/inc",
+   "${BUILD_ROOT}/Sensors/common/smr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/queue/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/framework/inc/",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/debug/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/game_rotation_vector/inc",
+  ])
+
+#--TEMP
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcci",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   ])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+GAME_RV_SOURCES = [
+      '${BUILDPATH}/game_rotation_vector.c'
+   ]
+   
+algogamerv_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                       '${BUILDPATH}/sam_algo_game_rotation_vector',
+                                       GAME_RV_SOURCES)
+
+# always clean sources
+GAME_RV_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/game_rotation_vector/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   GAME_RV_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/game_rotation_vector/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], GAME_RV_CLEAN_SOURCES)
+

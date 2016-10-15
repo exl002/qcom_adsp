@@ -1,0 +1,107 @@
+#===============================================================================
+#
+# AVS AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime: $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+import os
+
+# If OEM_ROOT is set from command prompt, then the following are done :-
+# Set OEM_ROOT in 'env'
+# Import Public API Paths from HAP component required for compilation of Audio Decoder Services and Audio Processing Services
+# Append OEM_ROOT flag in the list of existing flags
+if os.environ.get('OEM_ROOT')!=None:
+    env['OEM_ROOT'] = os.environ['OEM_ROOT']
+    env.RequirePublicApi('HAP_AVS',area='hap')
+    env.Append(CFLAGS = '-DOEM_ROOT')
+env = env.Clone()
+
+#import pdb; pdb.set_trace()
+#load the avs_library_builder
+env.Tool('avs_library_builder', toolpath = ['${BUILD_ROOT}/avs/build'])
+
+#import pdb; pdb.set_trace()
+
+if env.get('CHECKSIMBOOT') == True:  
+   env.Append(CFLAGS = '-DSIMBOOT=1')
+   
+if 'USES_AVS_TEST' in env:
+    env.Replace(AVS_TEST = True)
+
+if 'USES_DBG_MEM_LEAK' in env:
+    env.Append(CFLAGS='-DDBG_MEM_LEAK')
+
+if 'USES_MALLOC_WRAPPER' in env:
+    env.Append(CFLAGS='-DMALLOC_WRAPPER')
+
+if 'USES_DBG_BUFFER_ADDRESSES' in env:
+    env.Append(CFLAGS='-DDBG_BUFFER_ADDRESSES')
+
+# Function section macro
+if 'USES_ENABLE_FUNCTION_SECTIONS' not in env:
+   env.Replace(USES_ENABLE_FUNCTION_SECTIONS = True)
+
+#use -O2 opz.Default is -Os. O2 is found to be better than -Os based on the profiling data.
+#Use -Os when compiling for DINO256
+if env.get('DINO256MB'):
+   print "Compiling flag is set to", env.subst('${HEXAGONCC_OPT}')
+else:
+   env.Replace(HEXAGONCC_OPT = "${HEXAGON_OPT_2}")
+from build_config import chipset_specific_build_config
+chipset_specific_build_config(env)
+
+from cosim_config import generate_cosim_config
+generate_cosim_config(env)
+
+   
+env.Append(CFLAGS = '-mqdsp6-compat')
+
+
+Q6_MEMORY_DEFN_PATH = env.get('CHIPSET')
+
+env.PublishProtectedApi('AVS',[
+   '${INC_ROOT}/avs/avcs/inc',
+   '${INC_ROOT}/avs/voice/algos/sample_slip/inc',
+   '${INC_ROOT}/avs/voice/algos/tty/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_eamr/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_amrwb/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_capi/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_evrc/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_fourgv/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_fr/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_g711/inc',
+   '${INC_ROOT}/avs/voice/algos/vocoder_v13k/inc',
+   '${INC_ROOT}/build/chipset/'+Q6_MEMORY_DEFN_PATH,
+   '${QDSP6_RELEASE_DIR}/qc/lib/common',
+   ])
+
+env.AddOEMLibrary(['AVS_ADSP'], env.get('QDSP6_RELEASE_DIR')+'/qc/lib/'+env.get('Q6VERSION')+'/libqdsp.a')
+
+
+qdsp6_public_apis = [
+   'QDSP6'
+   ]
+env.RequirePublicApi(qdsp6_public_apis, area='qdsp6')
+
+env.LoadSoftwareUnits()

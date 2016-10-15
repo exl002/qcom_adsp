@@ -1,0 +1,7 @@
+#include "AEEStdDef.idl"
+
+interface adsp_perf {
+   long enable(in long ix);
+   long get_usecs(rout sequence<long long> dst);
+   long get_keys(rout sequence<char> keys, rout long maxLen, rout long numKeys);
+};

@@ -1,0 +1,116 @@
+#===============================================================================
+#
+# Rotation vector Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2013-2014 Qualcomm Technologies, Inc.  All Rights Reserved.
+# Qualcomm Technologies Proprietary and Confidential.
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/ssc.adsp/2.4.1/adsp_proc/Sensors/sam/algo/rotation_vector/build/rotation_vector.scons#1 $
+#  $DateTime: 2014/05/16 10:56:56 $
+#  $Author: coresvc $
+#  $Change: 5907808 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 2014/02/28  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 2013/06/25  ps     update require method for Public APIs
+# 2012/10/29  pk     initial version
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/rotation_vector/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'MPROC',
+]
+
+env.RequirePublicApi(CBSP_API, area='core')
+
+#-------------------------------------------------------------------------------
+# Headers required by SNA OSA
+#-------------------------------------------------------------------------------
+DAL_UCOS_API = [
+   'DAL',
+]
+env.RequireRestrictedApi(DAL_UCOS_API)
+env.RequirePublicApi(DAL_UCOS_API)
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SNS_SMR',
+   'SNS_MEMMGR',
+   'SNS_EVMGR',
+   'SNS_COMMON',
+   'SNS_DEBUG_DSPS',
+   'SNS_INT_SRVC'
+]
+
+env.RequireRestrictedApi(SENSORS_API)
+
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/idl/inc",
+   "${BUILD_ROOT}/Sensors/common/smr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/queue/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/util/circbuffer/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/framework/inc/",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/debug/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/rotation_vector/inc",
+  ])
+
+#--TEMP
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcci",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   ])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+ROTATION_VECTOR_SOURCES = [
+      '${BUILDPATH}/rotation_vector.c',
+   ]
+   
+algo_rot_vec_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                    '${BUILDPATH}/sam_algo_rot_vec',
+                                    ROTATION_VECTOR_SOURCES)
+
+# always clean sources
+ROTATION_VECTOR_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/rotation_vector/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   ROTATION_VECTOR_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/rotation_vector/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], ROTATION_VECTOR_CLEAN_SOURCES)
+

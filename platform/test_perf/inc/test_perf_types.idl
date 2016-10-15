@@ -1,0 +1,20 @@
+//============================================================================
+/// @file test_perf_types.idl
+///
+                                                           //qidl copyright
+//% Copyright (c) 2013 QUALCOMM Incorporated.
+                                                           //qidl nested=false
+//% All Rights Reserved.
+//% Qualcomm Confidential and Proprietary
+//============================================================================
+
+#include "AEEStdDef.idl"
+
+struct test_perf_result {
+   unsigned long long avg;
+   unsigned long long min;
+   unsigned long long max;
+   double stddev;
+   long result;
+};
+

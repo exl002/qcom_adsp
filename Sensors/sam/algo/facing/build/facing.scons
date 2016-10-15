@@ -1,0 +1,79 @@
+#===============================================================================
+#
+# Facing Lib
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2014 by Qualcomm Technologies, Inc.  All Rights Reserved
+# Qualcomm Technologies Proprietary and Confidential
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header:  $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 02/28/2014  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 12/02/2012  ag     Add multi PD support
+# 03/24/2011  ag     Enabling generation of library in internal build and
+#                    using existing library for customer builds
+# 12/22/2010  pg     Update for accessing UCOS header files from DALSYS. 
+# 08-17-10    ad     initial version
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/facing/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/facing/inc",
+])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+FACING_SOURCES = [
+      '${BUILDPATH}/facing.c',
+   ]
+   
+algofacing_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                       '${BUILDPATH}/sam_algo_facing',
+                                       FACING_SOURCES)
+									   
+# always clean sources
+FACING_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/facing/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   FACING_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/facing/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], FACING_CLEAN_SOURCES)

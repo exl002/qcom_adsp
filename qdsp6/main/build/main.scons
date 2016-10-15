@@ -1,0 +1,70 @@
+#===============================================================================
+#
+# main AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspcore.adsp/2.2/main/build/main.scons#2 $
+#  $DateTime: 2013/06/04 16:27:51 $
+#  $Author: coresvc $
+#  $Change: 3865905 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+# Core API 
+#  KERNEL for qube.h used by qurt_elite.h and qurt.h
+#  SERVICES for msg.h and msgcfg.h
+#  DEBUGTOOLS for err.h
+
+core_public_apis = [
+   'KERNEL',
+   'SERVICES',
+   'DEBUGTOOLS'
+   ]
+
+platform_public_apis = [
+   'PLATFORM_LIBS',
+   ]
+
+#env.PublishPrivateApi('WDT',[
+#    '../inc',
+#   ])
+
+env.RequirePublicApi(core_public_apis, area='core')
+env.RequirePublicApi(platform_public_apis, area='platform')
+env.RequireRestrictedApi('QDSP6')
+
+
+#-------------------------------------------------------------------------------
+# Setup source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/qdsp6/main/src"
+#LIBNAME = 'main'
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+SRC_DIRS = [
+              '${BUILDPATH}/main.c', 
+              ]
+
+env.AddObject(['CBSP_QDSP6_SW_IMAGE'], [SRC_DIRS])
+
+
+
+env.Append(CPPDEFINES="SENSOR_IMG_NAME=\\\"M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_SENSOR.pbn\\\"")
+env.Append(CPPDEFINES="AUDIO_IMG_NAME=\\\"M${BUILD_ASIC}${BUILD_ID}${BUILD_VER}_AUDIO.pbn\\\"")

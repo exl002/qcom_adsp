@@ -1,0 +1,84 @@
+#===============================================================================
+#
+# AVS APIs
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+env.PublishRestrictedApi('AVS',[
+   '${INC_ROOT}/avs/aud/algorithms/audproc/common/AudppCmnLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/BassBoost/BassBoostAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/Reverb/ReverbAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/Virtualizer/VirtualizerAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/PoplessEqualizer/PoplessEqualizerAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/Reverb/CReverbLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/ComboPP/CEqualizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/MultiBandIIRAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/MultiStageIIRAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/ChanIIRAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/IIRAppiCommon/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/CMultiBandIIRLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/filter/MultiStageIIRLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/resampler/GenericResamplerAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/resampler/CGenericResamplerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/resampler/GenericResamplerAppi24SRC/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/resampler/GenericResamplerLib24SRC/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/volumecontrol/CSoftVolumeControlsAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/volumecontrol/CSoftVolumeControlsLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/PBE/CPBELib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/QEnsemble/QEnsembleAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/QEnsemble/CQEnsembleLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/CDrcLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/CLimiterLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/CLimiter24Lib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/mbdrc/MBDRCAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/mbdrc/CMBDRCLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/downmix/CExciterLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/downmix/CDownMix51to2Lib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/downmix/DownMixAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/analyzer/CSpectrumAnalyzerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/analyzer/SpectrumAnalyzerAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/eans/EANSAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/eans/EANSLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/ComboPP/ComboPPAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/volumecontrol/GainAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/effects/PBE/PbeAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/volumecontrol/CSoftVolMultichannelLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/peakmeter/CPeakMeterLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/peakmeter/PeakMeterAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/channelmixer/ChannelMixerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/channelmixer/ChannelMixerAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/common/AppiCmnLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/ratematching/SampleSlipAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/ratematching/SampleSlipLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/byteshifter/ByteshifterAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/aig/AIGAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/gaincontrol/aig/AIGLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/latency/compressed/CompressedLatencyAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/compressedmute/CompressedMuteAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/latency/uncompressed/DelayAppi/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/upmixer/UpmixerAppi/inc',
+   ])
+
+env.LoadAPIUnits()

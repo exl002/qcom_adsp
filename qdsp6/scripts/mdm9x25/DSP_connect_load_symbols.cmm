@@ -1,0 +1,119 @@
+;****************************************************************
+; filename: DSP_connect_loadDSP.cmm
+; 	this script is utilized to connect to VPMSM8974, load SMD data structure and load DSP image
+; please enter
+;	1. the Port ID : used to connect VPMSM8974	
+;	   required
+;	2. SMD FLAG :  used to indicate to load share memory data structure
+;	   optional, default value is not loading SMD
+; usage:
+; 	DSP_connect_loadDSP <Port number> <SMD>
+; example:
+; 	DSP_connect_loadDSP 5000 SMD
+; 	DSP_connect_loadDSP 5001
+;****************************************************************
+
+entry   &ADSP_BUILDROOT &SMD_flag 
+global &Qube_va
+global &Qube_pa
+;print "You have entered &p_Port_ID as Port ID to connect VPM8974"
+
+TOOLBAR ON
+STATUSBAR ON
+;WINPAGE.RESET
+
+;******************************************************************
+; Reset QDSP6 through intercomm command
+;******************************************************************
+
+;----------------------------------------------------------------------------
+; Choose hex mode for input
+;----------------------------------------------------------------------------
+radix hex
+area
+area.select
+
+;----------------------------------------------------------------------------
+; Set the desired CPU
+;----------------------------------------------------------------------------
+;sys.cpu HexagonV5L
+;----------------------------------------------------------------------------
+; Attach to the Virtio simulation
+;----------------------------------------------------------------------------
+;sys.mcdconfig arch=v5l port=&p_Port_ID simargs=""
+;sys.mode.attach
+
+;----------------------------------------------------------------------------
+; Setup look and feel
+;----------------------------------------------------------------------------
+
+;----------------------------------------------------------------------------
+; Print banner
+;----------------------------------------------------------------------------
+print "MDM9X25: LPASS"
+;----------------------------------------------------------------------------
+; Open the register set
+;----------------------------------------------------------------------------
+register /spotlight
+
+;----------------------------------------------------------------------------
+; Open the source listing
+;----------------------------------------------------------------------------
+data.list
+
+;----------------------------------------------------------------------------
+;Recall and Define History File
+;----------------------------------------------------------------------------
+autostore , history
+
+sYmbol.SourcePath.reset
+
+;----------------------------------------------------------------------------
+; load SMD structure	
+;----------------------------------------------------------------------------
+if "&SMD_flag"=="SMD"
+(
+	print "loading SMD structure ......."
+	d.load.binary  smem_initialized.bin eahb:0x0 /noclear /nosymbol;
+	print "SMD structure loaded. Done"
+)
+;----------------------------------------------------------------------------
+; load DSP Image
+;----------------------------------------------------------------------------
+;print "loading DSP Image ......."
+;d.load.elf .\build\ms\*.elf /NOCODE /NOREG /NOCLEAR
+
+local &ELFILE 
+global &elfdir
+
+PRINT "Point to the elf file"
+DIALOG.FILE &ADSP_BUILDROOT/adsp_proc/build/ms/*.elf
+ENTRY &ELFILE
+
+d.load.elf &ELFILE /nocode
+print "DSP Image loaded. Done"
+
+&elfdir=OS.FILE.PATH(&ELFILE)
+
+
+
+&Qube_va=address.offset(start);
+&Qube_pa=0x02000000
+print "DSP address vritual=0x" &Qube_va " physical=0x" &Qube_pa
+
+;----------------------------------------------------------------------------
+; set breakpoints
+;----------------------------------------------------------------------------
+b.s main /o
+
+;D.S D:&Qube_pa+0x30 %LE %LONG 1
+;D.S D:&Qube_pa+0x34 %LE %LONG 1
+;D.S D:&Qube_pa+0x38 %LE %LONG 1
+
+;TERM.METHOD ANGEL QURTK_handle_trap0
+;b.s QURTK_handle_trap0 /onchip
+; This is where your printf messages will be displayed
+;term.gate
+
+
+

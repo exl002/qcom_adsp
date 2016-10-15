@@ -1,0 +1,387 @@
+;****************************************************************
+; filename: DSP_connect_loadDSP.cmm
+; 	this script is utilized to connect to VPMSM8974, load SMD data structure and load DSP image
+; please enter
+;	1. Memory dump binary file	
+;	2. Start address for memory dump
+;       3. Start address for DSP image
+;       4. Memory dump for SMD dump
+;       5. Start address for SMD dump
+; usage:
+; 	DSP_connect_loadDSP <file 1> <address 1> <addresss 2> <file 2> <address 1>
+; example:
+; 	DSP_connect_loadDSP memdump.bin 0x6c00000 0x6400000 smd.bin 0xfa00000
+;****************************************************************
+
+entry &dspfile &dumpaddr &dspaddr &OutputPath &ADSP_BUILDROOT &Target_Name &CurrentDirectory &openDSPpath &smdfile &smdaddr 
+global &Qube_va_guestos
+global &Qube_pa_guestos
+global &ELF_reloc
+print "You have entered &p_Port_ID as Port ID to connect VPM8974"
+
+TOOLBAR ON
+STATUSBAR ON
+;WINPAGE.RESET
+
+;******************************************************************
+; Reset QDSP6 through intercomm command
+;******************************************************************
+
+;----------------------------------------------------------------------------
+; Choose hex mode for input
+;----------------------------------------------------------------------------
+radix hex
+area
+area.select
+
+;----------------------------------------------------------------------------
+; Set the desired CPU
+;----------------------------------------------------------------------------
+sys.cpu HexagonV5
+sys.up
+;----------------------------------------------------------------------------
+; Attach to the Virtio simulation
+;----------------------------------------------------------------------------
+;sys.mcdconfig arch=v5l port=&p_Port_ID simargs=""
+;sys.mode.attach
+
+if "&dumpaddr"==""
+(
+   exit
+)
+else 
+(
+   ;print " "
+   ;print "Enter the choice number. is this dump in BIN format, or in ELF format"
+   ;print "1. BIN format\n\"
+   ;print "2. ELF format\n\n"
+   ;print " "
+   ;print " "
+   ;enter &choice
+
+   if &choice==1
+   (
+      if OS.FILE(.\build\ms\M8x10AAAAAAAAQ1234_reloc.elf)
+      (
+;--------If 8x10 load complete Ram dump . This is required due to SMMU-------
+       
+      d.load.binary &dspfile a:&dumpaddr
+   )
+      else
+      (
+ 
+	    if (&dumpaddr==0)
+	    (
+	        d.load.binary &dspfile a:&dspaddr++0x01800000 /SKIP &dspaddr
+		
+;----------------Only taking care of 8x26 and 8974 smem regions	
+;----------------8x26, 8974 ,8084 - 0xfa00000	
+;----------------8994 - cc0_0000
+;----------------8x10 - 0xd900000
+;----------------9x35- 1100000
+				
+		d.load.binary &dspfile a:0xfa00000++0x0200000 /SKIP 0xfa00000
+	    )
+	    else
+	    (
+	        d.load.binary &dspfile a:&dumpaddr
+	    )
+
+      )
+
+   )
+   else if &choice==2
+   (
+      d.load.elf &dspfile 
+   )
+   else
+   (
+      print "invalid choice! dump is not loaded!"
+      exit
+   )
+)
+
+d.save.binary &OutputPath\Adsp_Dump.bin a:&dspaddr++0x01e00000
+local &command
+if "&openDSPpath"==""
+(
+	&command="python &CurrentDirectory\strings.py &OutputPath\Adsp_Dump.bin &OutputPath\DumpTimeStamp.txt"
+	Os.Hidden &command
+	if OS.FILE(.\build\ms\M8974AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &ADSP_BUILDROOT\adsp_proc\build\ms\M8974AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(.\build\ms\M8x26AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &ADSP_BUILDROOT\adsp_proc\build\ms\M8x26AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(.\build\ms\M8x10AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &ADSP_BUILDROOT\adsp_proc\build\ms\M8x10AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(.\build\ms\M9x25AAAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &ADSP_BUILDROOT\adsp_proc\build\ms\M9x25AAAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+		
+	Os.Hidden &command
+	&command="perl &CurrentDirectory\TimeStampChek.pl &OutputPath"
+	Os.Hidden &command
+	OPEN #1 "&OutputPath\CheckDumpStatus.txt" /READ
+	READ #1 %line &DumpCheckFlag
+	CLOSE #1 
+	printer.file.close
+	if (&DumpCheckFlag==0)
+	(
+		&command="perl &CurrentDirectory\sendmail.pl &OutputPath"
+		Os.Hidden &command
+		dialog.message "Time Stamp in Dumps and elf file are not Matching - Level1 of validating Dumps Failed"
+	)
+	else
+	(
+		;dialog.message "Time Stamp in Dumps and elf file are Matched-Level1 of validating Dumps passed"
+	)
+)
+else
+(
+	&command="python &CurrentDirectory\strings.py &OutputPath\Adsp_Dump.bin &OutputPath\DumpTimeStamp.txt"
+	
+	Os.Hidden &command
+	if OS.FILE(&openDSPpath\M8974AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &openDSPpath\M8974AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(&openDSPpath\M8x26AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &openDSPpath\M8x26AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(&openDSPpath\M8x10AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &openDSPpath\M8x10AAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	else if OS.FILE(&openDSPpath\M8x10AAAAAAAAQ1234_reloc.elf)
+	(
+		&command="python &CurrentDirectory\strings.py &openDSPpath\M9x25AAAAAAAAAQ1234_reloc.elf &OutputPath\DumpTimeStamp.txt"
+	)
+	Os.Hidden &command
+	&command="perl &CurrentDirectory\TimeStampChek.pl &OutputPath"
+	Os.Hidden &command
+	OPEN #1 "&OutputPath\CheckDumpStatus.txt" /READ
+	READ #1 %line &DumpCheckFlag
+	CLOSE #1 
+	if (&DumpCheckFlag==0)
+	(
+		dialog.message "Time Stamp in Dumps and elf file are not Matching - Level1 of validating Dumps Failed"
+	)
+	else
+	(
+		;dialog.message "Time Stamp in Dumps and elf file are Matched-Level1 of validating Dumps passed"
+	)
+)
+
+if "&dspaddr"==""
+(
+   &dspaddr=&dumpaddr
+)
+
+if "&smdaddr"==""
+(
+) 
+else 
+(
+   d.load.binary &smdfile a:&smdaddr
+)
+
+;----------------------------------------------------------------------------
+; Setup look and feel
+;----------------------------------------------------------------------------
+
+;----------------------------------------------------------------------------
+; Print banner
+;----------------------------------------------------------------------------
+;print "VPMSM8974: LPASS"
+print "&Target_Name Dumps: &dspfile"
+title "&Target_Name Dumps: &dspfile"
+;----------------------------------------------------------------------------
+; Open the register set
+;----------------------------------------------------------------------------
+register /spotlight
+
+;----------------------------------------------------------------------------
+; Open the source listing
+;----------------------------------------------------------------------------
+data.list
+
+;----------------------------------------------------------------------------
+;Recall and Define History File
+;----------------------------------------------------------------------------
+autostore , history
+
+sYmbol.SourcePath.reset
+
+;----------------------------------------------------------------------------
+; load DSP Image
+;----------------------------------------------------------------------------
+print "loading DSP Image ... checking it's 8974 or 8x26 or 8x10...."
+print "Customer address &openDSPpath"
+
+cd &ADSP_BUILDROOT/adsp_proc
+
+if OS.FILE(.\build\ms\M8974AAAAAAAAQ1234_reloc.elf)
+(
+    if OS.FILE(&openDSPpath\M8974AAAAAAAAQ1234_reloc.elf) 
+    (
+        print "8974 ADSP MPD Image started"
+        d.load.elf &openDSPpath\M8974AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        d.load.elf &openDSPpath\M8974AAAAAAAAQ1234_SENSOR_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8974AAAAAAAAQ1234_reloc"
+        print "8974 ADSP MPD Image loaded. Done"
+    )
+    else
+    (
+        d.load.elf .\build\ms\M8974AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        d.load.elf .\build\ms\M8974AAAAAAAAQ1234_SENSOR_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8974AAAAAAAAQ1234_reloc"
+        print "8974 ADSP MPD Image loaded. Done"
+    )	
+)
+else if OS.FILE(.\build\ms\M8x26AAAAAAAAQ1234_reloc.elf)
+(
+	if OS.FILE(&openDSPpath\M8x26AAAAAAAAQ1234_reloc.elf) 
+    (
+        print "8x26 ADSP MPD Image started"
+        d.load.elf &openDSPpath\M8x26AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        d.load.elf &openDSPpath\M8x26AAAAAAAAQ1234_SENSOR_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8x26AAAAAAAAQ1234_reloc"
+        print "8x26 ADSP MPD Image loaded. Done"
+    )
+    else
+    (
+        d.load.elf .\build\ms\M8x26AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        d.load.elf .\build\ms\M8x26AAAAAAAAQ1234_SENSOR_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8x26AAAAAAAAQ1234_reloc"
+        print "8x26 ADSP MPD Image loaded. Done"
+    )	
+)
+else if OS.FILE(.\build\ms\M8x10AAAAAAAAQ1234_reloc.elf)
+(
+	if OS.FILE(&openDSPpath\M8x10AAAAAAAAQ1234_reloc.elf) 
+    (
+        d.load.elf &openDSPpath\M8x10AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8x10AAAAAAAAQ1234_reloc"
+        print "8x10 ADSP MPD Image loaded. Done"
+    )
+    else
+    (
+        d.load.elf .\build\ms\M8x10AAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M8x10AAAAAAAAQ1234_reloc"
+        print "8x10 ADSP MPD Image loaded. Done"
+    )	
+)
+else if OS.FILE(.\build\ms\M9x25AAAAAAAAAQ1234_reloc.elf)
+(
+	if OS.FILE(&openDSPpath\M9x25AAAAAAAAAQ1234_reloc.elf) 
+    (
+        print "9x25 ADSP SPD Image started"
+
+        d.load.elf &openDSPpath\M9x25AAAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M9x25AAAAAAAAAQ1234_reloc"
+        print "9x25 ADSP SPD Image loaded"
+    )
+    else
+    (
+        print "9x25 ADSP SPD Image started"
+
+        d.load.elf .\build\ms\M9x25AAAAAAAAAQ1234_reloc.elf /NOCODE /NOREG /NOCLEAR /NOMAP /strippart "adsp_proc" /sourcepath "."
+        &ELF_reloc="M9x25AAAAAAAAAQ1234_reloc"
+        print "9x25 ADSP MPD Image loaded. Done"
+    )	
+)
+
+// initialize the variables first0x00c00078
+&Qube_pa_userpd1=0x07600000
+&matchAddr=0x07600000
+data.find A:0x07500000--0x077fffff %LONG %LE 0x7800c000
+if found()
+(    
+    &matchAddr=(address.offset(track.address())-4)
+    print "USER PD start address found 0x" &matchAddr
+)
+
+&Qube_va_guestos=address.offset(start);
+&Qube_pa_guestos=&dspaddr
+print "DSP guest OS address vritual=0x" &Qube_va_guestos " physical=0x" &Qube_pa_guestos
+&Qube_va_userpd1=0x2da00000
+&Qube_pa_userpd1=&matchAddr
+print "DSP UserPD1 address vritual=0x" &Qube_va_userpd1 " physical=0x" &Qube_pa_userpd1
+
+;----------------------------------------------------------------------------
+; set breakpoints
+;----------------------------------------------------------------------------
+;b.s main /onchip
+;b.s QURTK_tlb_crash
+;b.s QURTK_fatal_error
+;b.s QURTK_nonfatal_error
+;b.s QURTK_handle_error
+
+;D.S D:&Qube_pa_guestos+0x30 %LE %LONG 1
+;D.S D:&Qube_pa_guestos+0x34 %LE %LONG 1
+;D.S D:&Qube_pa_guestos+0x38 %LE %LONG 1
+
+;TERM.METHOD ANGEL QURTK_handle_trap0
+;b.s QURTK_handle_trap0 /onchip
+; This is where your printf messages will be displayed
+;term.gate
+
+mmu.create &Qube_va_guestos--(&Qube_va_guestos+0x1300000) &Qube_pa_guestos--(&Qube_pa_guestos+0x1300000)
+mmu.format Blast QURTK_pagetables &Qube_va_guestos--(&Qube_va_guestos+0xffffff) &Qube_pa_guestos
+if ("&ELF_reloc"!="M8x10AAAAAAAAQ1234_reloc")
+(
+    mmu.create &Qube_va_userpd1--(&Qube_va_userpd1+0x500000) &Qube_pa_userpd1--(&Qube_pa_userpd1+0x500000)
+)
+mmu.on
+mmu.autoscan on
+mmu.tablewalk on
+
+
+
+; LOAD RTOS AWARENESS MODULE
+TASK.CONFIG &CurrentDirectory\qurt_model.t32
+MENU.ReProgram .\core\kernel\qurt\install_again\ADSPv5MP\debugger\T32\qurt_model.men
+
+
+; Enable RTOS debug messages
+;ext.debug 1
+
+
+;y.spath.srd + .
+
+
+
+if ("&ELF_reloc"=="M8974AAAAAAAAQ1234_reloc")
+(
+    MENU.REPROGRAM .\core\systemdrivers\hwio\scripts\msm8974\hwioreg.men
+    path . + .\core\systemdrivers\hwio\scripts\msm8974
+)
+else if ("&ELF_reloc"=="M8x26AAAAAAAAQ1234_reloc") 
+(
+    MENU.REPROGRAM .\core\systemdrivers\hwio\scripts\msm8x26\hwioreg.men
+    path . + .\core\systemdrivers\hwio\scripts\msm8x26
+)
+else if ("&ELF_reloc"=="M8x10AAAAAAAAQ1234_reloc")
+(
+    MENU.REPROGRAM .\core\systemdrivers\hwio\scripts\msm8x10\hwioreg.men
+    path . + .\core\systemdrivers\hwio\scripts\msm8x10
+)
+else if ("&ELF_reloc"=="M9x25AAAAAAAAAQ1234_reloc")
+(
+	MENU.REPROGRAM .\core\systemdrivers\hwio\scripts\mdm9x25\hwioreg.men
+	path . + .\core\systemdrivers\hwio\scripts\mdm9x25
+)
+
+do hwio.cmm
+
+;r.s PC &Qube_va_guestos
+
+
+

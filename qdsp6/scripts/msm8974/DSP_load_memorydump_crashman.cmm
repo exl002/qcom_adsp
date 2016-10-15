@@ -1,0 +1,76 @@
+;****************************************************************
+; filename: DSP_timestamp_check.cmm
+;
+;****************************************************************
+;LOCAL &ramdumpfile &smddumpfile
+;LOCAL &f3logpath &ulogpath
+;LOCAL &ADSP_BUILDROOT
+;entry &choice 
+
+;TOOLBAR ON
+;STATUSBAR ON
+
+ENTRY &Target_Name &ramdumpfile &OutputPath &ADSP_BUILDROOT &CurrentDirectory &Customer_Elf_Path
+
+global &ramdumpstartadd
+
+;LOCAL &ramdumpstartaddramdumpstartadd
+
+area.close
+winclear
+reset
+
+;WINPOS 10% 10% 80% 80% 0. 0. A000
+area.create A000
+area.open A000 &OutputPath\areainfo.txt
+WINPOS 10% 10% 80% 80% 0. 0. A000
+area.view A000 
+area.select A000
+
+
+sys.u
+
+print "PLEASE ENTERT ADSP image START ADDRESS: (eg: 0x00000000)" 
+print " "
+print " "
+print " "
+print " "
+enter &adspstartadd 
+
+OPEN #1 "&OutputPath\binarylength.txt" /READ
+READ #1 %line &BinaryLength
+CLOSE #1 
+
+print "The length of Binary provided is &BinaryLength"
+
+if (&BinaryLength>52428800)
+(
+ &ramdumpstartadd=0x00000000
+)
+else 
+(
+ &ramdumpstartadd=&adspstartadd
+)
+
+
+print "RAM dump start address &ramdumpstartadd"
+print "ADSP image start address &adspstartadd"
+print "Customer address &Customer_Elf_Path"
+cd &ADSP_BUILDROOT/adsp_proc
+do qdsp6\scripts\msm8974\DSP_connect_memdump_MPD.cmm &ramdumpfile &ramdumpstartadd &adspstartadd &Customer_Elf_Path
+
+do qdsp6\scripts\msm8974\analy_qurt_error.cmm
+do qdsp6\scripts\msm8974\DSP_load_pagetables.cmm
+
+
+
+;do qdsp6\scripts\mdm9x25\DSP_connect_memdump.cmm &ramdumpfile &ramdumpstartadd 0x02000000
+;do qdsp6\scripts\mdm9x25\analy_qurt_error.cmm
+
+cd qdsp6\scripts
+do recover_f3.cmm &OutputPath
+cd ../..
+do core\power\ulog\scripts\ULogDump_QuRTMPD.cmm &OutputPath &ELF_reloc
+
+do qdsp6\scripts\msm8974\DSP_dump_info.cmm &OutputPath 
+

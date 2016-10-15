@@ -1,0 +1,131 @@
+#===============================================================================
+#
+# ULOG Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2013 by QUALCOMM, Technologies Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //source/qcom/qct/core/power/ulog/rel/2012/build/SConscript#2 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 07/16/12   jdp     Modified to support the new Badger directory structure.
+# 11/29/10   ss      Build changes for 8960 RIVA target.
+# 04/20/10   bjs     Add diag and processor name handling.
+# 08/13/09   taw     Initial version.
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+import os
+
+
+#-------------------------------------------------------------------------------
+# SRC PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/power/ulog"
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Determine target information
+#-------------------------------------------------------------------------------
+env['LOCAL_TARG_CHIP'] = env['MSM_ID']
+env['LOCAL_TARG_PROC'] = env.DetermineProcessorName()
+
+#-------------------------------------------------------------------------------
+# Local build searchpath for target customization
+#-------------------------------------------------------------------------------
+
+env.PublishProtectedApi('LOCAL_INCLUDE_PATH', [
+   SRCPATH + "/src",
+   SRCPATH + "/config",
+])
+env.RequireProtectedApi(['LOCAL_INCLUDE_PATH'])
+
+#-------------------------------------------------------------------------------
+# External depends outside CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([
+   'CS',
+])
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'POWER',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'DEBUGTOOLS',
+   'DEBUGTRACE',
+   # needs to be last also contains wrong comdef.h
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+env.RequireProtectedApi(['POWER_UTILS'])
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+# ULog Library
+#
+ULOG_LIB_SOURCES = [
+   '${BUILDPATH}/src/ULogCore.c',
+   '${BUILDPATH}/src/ULogFront.c',
+   '${BUILDPATH}/src/ULogParsers.c',
+   '${BUILDPATH}/src/ULogRead.c',
+   '${BUILDPATH}/src/ULogDiag.c',
+]
+
+ulog_lib_obj = env.Object(ULOG_LIB_SOURCES)
+ulog_lib = env.Library('${BUILDPATH}/ulog', ulog_lib_obj)
+
+
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+env.AddLibsToImage(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['MODEM_IMAGE', 'CBSP_MODEM_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['APPS_IMAGE', 'CBSP_APPS_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['WCN_IMAGE', 'CBSP_WCN_IMAGE', 'CORE_WCN'], ulog_lib)
+
+env.AddLibsToImage(['RPM_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['CORE_SPS'], ulog_lib)
+
+env.AddLibsToImage(['SBL3_BOOT_IMAGE'], ulog_lib)
+
+env.AddLibsToImage(['CORE_GSS'], ulog_lib)
+
+env.AddLibsToImage(['CORE_QDSP6_SENSOR_SW'], ulog_lib)
+
+if 'USES_RCINIT' in env:
+  RCINIT_IMG = ['WCN_IMAGE', 'CORE_MODEM', 'CORE_QDSP6_SW', 'APPS_IMAGE', 'CBSP_APPS_IMAGE']
+  env.AddRCInitFunc(           # Code Fragment in TMC: NO
+   RCINIT_IMG,                 #
+   {
+    'sequence_group'             : 'RCINIT_GROUP_2',            # required
+    'init_name'                  : 'ulog_backend',              # required
+    'init_function'              : 'ULogBackend_Init',          # required
+    'dependencies'               : ['dalsys',]
+   })

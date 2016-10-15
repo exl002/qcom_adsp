@@ -1,0 +1,20 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+platform_root = '${BUILD_ROOT}/platform'
+env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+#-------------------------------------------------------------------------------
+# Load Subunits (sys)
+#-------------------------------------------------------------------------------
+env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp'], '${ADSP_PLATFORM_ROOT}/utils'))
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)

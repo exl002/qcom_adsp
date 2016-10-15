@@ -1,0 +1,42 @@
+#===============================================================================
+#
+# AVS APIs
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime:  $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+
+env.PublishRestrictedApi('AVS',[
+   '${INC_ROOT}/avs/aud/algorithms/utils/audio_cmn_lib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/generic/depacketizer/CDepacketizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/dtmf/dec/CDtmfGeneratorLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/ac3/packetizer/CAc3PacketizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/eac3/packetizer/CeAc3PacketizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/aac/packetizer/CAacPacketizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/dts/packetizer/CDtsPacketizerLib/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/passthru/formatter/CPassthruFormatterLib/inc',
+   ])
+
+   
+env.LoadAPIUnits()

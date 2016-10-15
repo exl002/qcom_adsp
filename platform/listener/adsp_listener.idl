@@ -1,0 +1,23 @@
+#include "AEEStdDef.idl"
+
+const long _const_adsp_listener_handle = 3;
+
+module adsp {
+   interface listener {
+      typedef sequence<uint8> buffer;
+      typedef uint32 remote_handle;
+      typedef uint32 invoke_ctx;
+      long next_invoke(in invoke_ctx prevCtx,
+                       in long prevResult, 
+                       in sequence<buffer> outBufs, 
+                       rout invoke_ctx ctx,
+                       rout remote_handle handle, 
+                       rout uint32 sc,
+                       rout sequence<buffer> inBuffers, 
+                       rout sequence<long> inBufLenReq,
+                       rout sequence<long> routBufLenReq);
+      long invoke_get_in_bufs(in invoke_ctx ctx,
+                              rout sequence<buffer> inBuffers);
+      long init();
+   };
+};

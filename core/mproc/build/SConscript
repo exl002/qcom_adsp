@@ -1,0 +1,45 @@
+#===============================================================================
+#
+# MPROC Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by QUALCOMM, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/core.adsp/2.2/mproc/build/SConscript#2 $
+#  $DateTime: 2013/05/14 09:26:35 $
+#  $Author: coresvc $
+#  $Change: 3760771 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+if env.has_key('BUILD_BOOT_CHAIN'):
+  # Publish Protected API, accessible only within MPROC.
+  env.PublishProtectedApi('SMEM_INTERNAL', [
+    "${INC_ROOT}/core/mproc/smem/src",
+  ])
+
+#-------------------------------------------------------------------------------
+# Convert warnings to errors 
+#-------------------------------------------------------------------------------
+env.Append(CFLAGS = "-Werror ")
+
+#-------------------------------------------------------------------------------
+# Load sub scripts
+#-------------------------------------------------------------------------------
+env.LoadSoftwareUnits()
+env.LoadImageUnits()

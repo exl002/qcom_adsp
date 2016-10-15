@@ -1,0 +1,205 @@
+#===============================================================================
+#
+# QMI Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime: 2010/09/22 18:42:11 $
+#  $Author: coresvc $
+#  $Change: 1450404 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+env.Append(CPPDEFINES=['MSG_BT_SSID_DFLT=MSG_SSID_ONCRPC'])
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/core/mproc/qmi/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+env.PublishPrivateApi('MPROC_QMI_PRIVATE', [
+    '${BUILD_ROOT}/core/mproc/qmi/src/qcci',
+    '${BUILD_ROOT}/core/mproc/qmi/src/qcsi',
+    '${BUILD_ROOT}/core/mproc/qmi/src/common',
+    '${BUILD_ROOT}/core/mproc/qmi/src/core_server',
+    '${BUILD_ROOT}/core/mproc/qmi/src/encdec',
+    '${BUILD_ROOT}/core/mproc/qmi/src/qmi_si',
+])
+
+#-------------------------------------------------------------------------------
+# External depends within CoreBSP
+#-------------------------------------------------------------------------------
+env.RequireExternalApi([
+])
+
+#-------------------------------------------------------------------------------
+# Internal depends within CoreBSP
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DEBUGTOOLS',
+   'DAL',
+   'MPROC',
+   'DIAG',
+   'STORAGE',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'MPROC_QMI_PRIVATE',
+   'WIREDCONNECTIVITY',
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequirePublicApi(['TEST','COMMON'], area='QMIMSGS')
+env.RequireRestrictedApi(CBSP_API)
+
+if 'USES_SENSOR_IMG' in env:
+   env.Append(CPPDEFINES=['QMI_PING_SERVICE_INSTANCE=9'])
+
+if 'USES_QURTOS_IMG' in env:
+   env.Append(CPPDEFINES=['QMI_PING_SERVICE_INSTANCE=8'])
+   env.Append(CPPDEFINES=['FEATURE_QMI_SMEM_LOG', 'FEATURE_QMI_MSG', 'FEATURE_QMI_NATIVE_IPC_ROUTER'])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+QMI_QCCI_SOURCES  =  [
+  '${BUILDPATH}/qcci/qmi_cci_common.c',
+]
+
+QMI_QCCI_IPC_XPORT_SOURCES = [
+  '${BUILDPATH}/qcci/qmi_cci_xport_ipc.c',
+]
+
+QMI_QCCI_IPC_QDI_XPORT_SOURCES = [
+  '${BUILDPATH}/qcci/qmi_cci_xport_ipc_qdi.c',
+]
+
+QMI_PING_CLIENT_SOURCES = [
+  '${BUILDPATH}/qcci/qmi_ping_clnt.c',
+]
+
+QMI_QCSI_SOURCES = [
+  '${BUILDPATH}/qcsi/qmi_csi_common.c',
+]
+
+QMI_QCSI_IPC_XPORT_SOURCES = [
+  '${BUILDPATH}/qcsi/qmi_csi_xport_ipc.c',
+]
+
+QMI_QCSI_IPC_QDI_XPORT_SOURCES = [
+  '${BUILDPATH}/qcsi/qmi_csi_xport_ipc_qdi.c',
+]
+
+QMI_PING_SERVICE_SOURCES = [
+  '${BUILDPATH}/qcsi/qmi_ping_svc.c',
+  '${BUILDPATH}/qcsi/qmi_ping_svc_main.c',
+]
+
+QMI_FW_INIT_SOURCES = [
+  '${BUILDPATH}/common/qmi_fw_init.c',
+]
+
+QMI_COMMON_SOURCES = [
+  '${BUILDPATH}/common/qmi_loopback.c',
+]
+
+QMI_ENCDEC_SOURCES = [
+  '${BUILDPATH}/encdec/qmi_idl_accessor.c',
+  '${BUILDPATH}/encdec/qmi_idl_lib.c',
+]
+
+QMI_SI_SOURCES = [
+  '${BUILDPATH}/qmi_si/qmi_si_database.c',
+]
+
+QMI_CORE_SERVER_SOURCES = [
+    '${BUILDPATH}/core_server/qmi_container_service.c',
+    '${BUILDPATH}/core_server/qmi_dispatch_service.c',
+    '${BUILDPATH}/core_server/qmi_indication_service.c',
+    '${BUILDPATH}/core_server/qmi_task_service.c',
+    '${BUILDPATH}/core_server/qmi_task_service_qurt.c',
+    '${BUILDPATH}/core_server/qmi_core_server.c',
+    '${BUILDPATH}/core_server/qmi_ping_server_qurt.c',
+    '${BUILDPATH}/core_server/qmi_ping_server.c',
+]
+
+common_obj            = env.Object(QMI_COMMON_SOURCES)
+qmi_qcci_obj          = env.Object(QMI_QCCI_SOURCES)
+qmi_qcci_ipc_obj      = env.Object(QMI_QCCI_IPC_XPORT_SOURCES)
+qmi_qcci_ipc_qdi_obj  = env.Object(QMI_QCCI_IPC_QDI_XPORT_SOURCES)
+qmi_qcsi_obj          = env.Object(QMI_QCSI_SOURCES)
+qmi_qcsi_ipc_obj      = env.Object(QMI_QCSI_IPC_XPORT_SOURCES)
+qmi_qcsi_ipc_qdi_obj  = env.Object(QMI_QCSI_IPC_QDI_XPORT_SOURCES)
+qmi_fw_init_obj       = env.Object(QMI_FW_INIT_SOURCES)
+qmi_encdec_obj        = env.Object(QMI_ENCDEC_SOURCES)
+qmi_core_server_obj   = env.Object(QMI_CORE_SERVER_SOURCES)
+qmi_ping_client_obj   = env.Object(QMI_PING_CLIENT_SOURCES)
+qmi_ping_service_obj  = env.Object(QMI_PING_SERVICE_SOURCES)
+qmi_si_obj            = env.Object(QMI_SI_SOURCES)
+
+common_lib            = env.Library('${BUILDPATH}/common', [common_obj])
+qmi_qcci_lib          = env.Library('${BUILDPATH}/qcci', [qmi_qcci_obj])
+qmi_qcci_ipc_lib      = env.Library('${BUILDPATH}/qcci_ipc', [qmi_qcci_ipc_obj])
+qmi_qcci_ipc_qdi_lib  = env.Library('${BUILDPATH}/qcci_ipc_qdi', [qmi_qcci_ipc_qdi_obj])
+qmi_qcsi_lib          = env.Library('${BUILDPATH}/qcsi', [qmi_qcsi_obj])
+qmi_qcsi_ipc_lib      = env.Library('${BUILDPATH}/qcsi_ipc', [qmi_qcsi_ipc_obj])
+qmi_qcsi_ipc_qdi_lib  = env.Library('${BUILDPATH}/qcsi_ipc_qdi', [qmi_qcsi_ipc_qdi_obj])
+qmi_fw_init_lib       = env.Library('${BUILDPATH}/fw_init', [qmi_fw_init_obj])
+qmi_encdec_lib        = env.Library('${BUILDPATH}/encdec', [qmi_encdec_obj])
+qmi_core_server_lib   = env.Library('${BUILDPATH}/qcsi_core', [qmi_core_server_obj])
+qmi_ping_client_lib   = env.Library('${BUILDPATH}/ping_client', [qmi_ping_client_obj])
+qmi_ping_service_lib  = env.Library('${BUILDPATH}/ping_service', [qmi_ping_service_obj])
+qmi_si_lib            = env.Library('${BUILDPATH}/qmi_si', [qmi_si_obj])
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+qmi_common_libs = [common_lib, qmi_qcci_lib, qmi_qcsi_lib, qmi_encdec_lib, qmi_si_lib, qmi_ping_service_lib, qmi_ping_client_lib, qmi_fw_init_lib]
+qmi_guest_libs  = [qmi_common_libs, qmi_qcci_ipc_lib, qmi_qcsi_ipc_lib, qmi_core_server_lib] # Leaving out core server from sensor image till required.
+qmi_sensor_libs = [qmi_common_libs, qmi_qcci_ipc_qdi_lib, qmi_qcsi_ipc_qdi_lib]
+
+
+env.AddLibsToImage(['QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE','CORE_QDSP6_SW'], qmi_guest_libs)
+env.AddLibsToImage(['CORE_QDSP6_SENSOR_SW'], qmi_sensor_libs)
+
+#-------------------------------------------------------------------------------
+
+if 'USES_RCINIT' in env:
+   RCINIT_IMG = ['CORE_MODEM', 'CORE_QDSP6_SW', 'CORE_GSS']
+   env.AddRCInitFunc(           # Code Fragment in TMC: NO
+    RCINIT_IMG,                 # define TMC_RCINIT_INIT_QMI_FW_INIT
+    {
+     'sequence_group'             : 'RCINIT_GROUP_0',                   # required
+     'init_name'                  : 'qmi_fw',                           # required
+     'init_function'              : 'qmi_fw_init',                      # required
+     'dependencies'               : ['smd','ipc_router',]
+    })
+   env.AddRCInitFunc(           # Code Fragment in TMC: NO
+    ['CORE_QDSP6_SENSOR_SW'],   # define TMC_RCINIT_INIT_QMI_FW_INIT
+    {
+     'sequence_group'             : 'RCINIT_GROUP_0',                   # required
+     'init_name'                  : 'qmi_fw_user',                      # required
+     'init_function'              : 'qmi_fw_init',                      # required
+     'dependencies'               : ['ipc_router_user']
+    })
+

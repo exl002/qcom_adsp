@@ -1,0 +1,53 @@
+#===============================================================================
+#
+# Build Script : RCXH
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#===============================================================================
+
+Import('env')
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+
+env.VariantDir('${BUILDPATH}', '${BUILD_ROOT}/core/debugtools/rcxh/src', duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Internal Dependency Information
+#-------------------------------------------------------------------------------
+
+CBSP_API = [
+   'DAL',
+   'TMS',
+   'DEBUGTOOLS',
+   'SERVICES',
+   'SYSTEMDRIVERS', # REQ FOR KERNEL? KERNEL SHOULD PROVIDE DEPENDENCY
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+
+env.RequireRestrictedApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+RCXH_COMMON = [
+    '${BUILDPATH}/rcxh.c',
+]
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+RCXH_IMG = [ 'CORE_APPS', 'CORE_GSS', 'CORE_MODEM', 'CORE_VPU', 'CORE_WCN', 'MODEM_MODEM', 'CORE_QDSP6_SW', ]
+
+env.AddLibrary(RCXH_IMG, '${BUILDPATH}/rcxh', RCXH_COMMON)

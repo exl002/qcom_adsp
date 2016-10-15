@@ -1,0 +1,44 @@
+#===============================================================================
+#
+# AVS AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: $
+#  $DateTime: $
+#  $Author:  $
+#  $Change:  $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+#env.Append(CFLAGS = '-DAFE_DAL_TEST')
+
+env.PublishProtectedApi('AVS',[
+   '${INC_ROOT}/avs/aud/audproc/gaincontrol/CLimiter24Lib/inc',
+   '${INC_ROOT}/avs/voice/algos/voice_resampler/inc',
+   '${INC_ROOT}/avs/aud/algorithms/audproc/resampler/GenericResamplerLib24SRC/inc',
+   '${INC_ROOT}/avs/voice/algos/iir_filter/inc',
+   '${INC_ROOT}/avs/voice/algos/sample_slip/inc',
+   '${INC_ROOT}/avs/aud/algorithms/utils/audio_cmn_lib/inc',
+   '${INC_ROOT}/avs/avcs/inc',
+   '${INC_ROOT}/avs/apr/osal/inc',
+   '${INC_ROOT}/avs/listen/algos/common/feature_extraction/inc',
+   '${INC_ROOT}/avs/listen/algos/common/signal_processing/inc',
+   ])  
+
+env.LoadSoftwareUnits()

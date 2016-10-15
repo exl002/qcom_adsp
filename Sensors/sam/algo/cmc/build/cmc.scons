@@ -1,0 +1,130 @@
+#===============================================================================
+#
+# CMC Libs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2013 - 2014 Qualcomm Technologies, Inc.  All Rights Reserved.
+# Qualcomm Technologies Proprietary and Confidential.
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/ssc.adsp/2.4.1/adsp_proc/Sensors/sam/algo/cmc/build/cmc.scons#2 $
+#  $DateTime: 2014/06/11 10:08:28 $
+#  $Author: pwbldsvc $
+#  $Change: 6065547 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 2014-02-28  MW     Added SENSORS_DD_DEV_FLAG for HD22
+# 2014-01-31  ks     added ifmc support for cmc 1.1
+# 2013-10-20  ad     update compiler optimization
+# 2013-6-25   ps     update require method for Public APIs
+# 2013-04-08  jayarama  Initial check-in
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${BUILD_ROOT}/Sensors/sam/algo/cmc/src"
+
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External depends within module
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# External depends outside module
+#-------------------------------------------------------------------------------
+CBSP_API = [
+   'DAL',
+   'MPROC',
+]
+
+env.RequirePublicApi(CBSP_API, area='core')
+
+env.Append(CCFLAGS = " -O2 ")
+
+#-------------------------------------------------------------------------------
+# Headers required by SNA OSA
+#-------------------------------------------------------------------------------
+DAL_UCOS_API = [
+   'DAL',
+]
+env.RequireRestrictedApi(DAL_UCOS_API)
+env.RequirePublicApi(DAL_UCOS_API)
+
+#-------------------------------------------------------------------------------
+# Internal depends within module
+#-------------------------------------------------------------------------------
+SENSORS_API = [
+   'SNS_SMR',
+   'SNS_MEMMGR',
+   'SNS_EVMGR',
+   'SNS_COMMON',
+   'SNS_DEBUG_DSPS',
+   'SNS_INT_SRVC'
+]
+
+env.RequireRestrictedApi(SENSORS_API)
+
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/Sensors/api",
+   "${BUILD_ROOT}/Sensors/common/inc",
+   "${BUILD_ROOT}/Sensors/common/idl/inc",
+   "${BUILD_ROOT}/Sensors/common/smr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/memmgr/inc",
+   "${BUILD_ROOT}/Sensors/common/util/queue/inc",
+   "${BUILD_ROOT}/Sensors/common/util/mathtools/inc",
+   "${BUILD_ROOT}/Sensors/common/util/circbuffer/inc",
+   "${BUILD_ROOT}/Sensors/common/sam/framework/inc/",
+   "${BUILD_ROOT}/Sensors/common/sam/algo/common/inc",
+   "${BUILD_ROOT}/Sensors/debug/inc",
+   "${BUILD_ROOT}/Sensors/sam/algo/cmc/inc",
+  ])
+
+#--TEMP
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcci",
+   "${BUILD_ROOT}/core/mproc/qmi/src/qcsi",
+   "${BUILD_ROOT}/core/mproc/qmi/src/common",
+   ])
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+CMC_SOURCES = [
+      '${BUILDPATH}/cmc.c',
+      '${BUILDPATH}/motion_feature.c',
+      '${BUILDPATH}/cmc_gmm_probability_computation.c',
+      '${BUILDPATH}/cmc_stats_model.c',
+      '${BUILDPATH}/cmc_lr_probability_computation.c',
+      '${BUILDPATH}/cmc_unfiltered_probability_combiner.c',
+      '${BUILDPATH}/cmc_probability_filter.c',
+      '${BUILDPATH}/cmc_hysteresis.c',
+      '${BUILDPATH}/cmc_heuristics.c',
+      '${BUILDPATH}/genFFTtwiddle.c',
+      '${BUILDPATH}/fft.S',
+   ]
+   
+algocmc_lib = env.AddBinaryLibrary(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], 
+                                    '${BUILDPATH}/sam_algo_cmc',
+                                    CMC_SOURCES)
+									
+# always clean sources
+CMC_CLEAN_SOURCES = env.FindFiles(['*.c'], '${BUILD_ROOT}/Sensors/sam/algo/cmc/src')
+
+if 'SENSORS_DD_DEV_FLAG' in env:
+   # headers that should not be shared in HD22
+   CMC_CLEAN_SOURCES += env.FindFiles(['*.h'], '${BUILD_ROOT}/Sensors/sam/algo/cmc/inc')
+	
+# Clean sources
+env.CleanPack(['CBSP_QDSP6_SW_IMAGE', 'CORE_QDSP6_SENSOR_SW'], CMC_CLEAN_SOURCES)

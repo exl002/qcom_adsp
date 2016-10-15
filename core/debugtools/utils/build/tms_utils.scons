@@ -1,0 +1,122 @@
+# vi: tw=128 ts=3 sw=3 et
+# @file tms_utils.scons
+# @brief This file contains the API for the TMS Utilities, API 0.x
+#===============================================================================
+# NOTE: The @brief description above does not appear in the PDF.
+# The tms_mainpage.dox file contains the group/module descriptions that
+# are displayed in the output PDF generated using Doxygen and LaTeX. To
+# edit or update any of the group/module text in the PDF, edit the
+# tms_mainpage.dox file or contact Tech Pubs.
+#===============================================================================
+#===============================================================================
+# Copyright (c) 2014 Qualcomm Technologies Incorporated.
+# All Rights Reserved.
+# Qualcomm Confidential and Proprietary.
+#===============================================================================
+#===============================================================================
+# Edit History
+# $Header: //components/rel/core.adsp/2.2/debugtools/utils/build/tms_utils.scons#1 $
+# $DateTime: 2014/07/24 05:52:16 $
+# $Change: 6312319 $
+# $Author: pwbldsvc $
+#===============================================================================
+
+Import('env')
+env = env.Clone()
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+
+env.VariantDir('${BUILDPATH}', '../src', duplicate=0)
+
+#-------------------------------------------------------------------------------
+# External Dependency
+#-------------------------------------------------------------------------------
+
+#env.RequireExternalApi([
+#   'XYZ',
+#])
+
+#-------------------------------------------------------------------------------
+# Internal Dependency
+#-------------------------------------------------------------------------------
+
+env.RequirePublicApi([
+   'DAL',
+   'TMS',
+   'DEBUGTOOLS', # alias to TMS
+   'DEBUGTRACE',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'KERNEL', # needs to be last (also contains wrong comdef.h)
+])
+
+env.RequireRestrictedApi([
+   'TMS_RESTRICTED',
+   'DEBUGTOOLS', # alias to TMS
+])
+
+#-------------------------------------------------------------------------------
+# Sources
+#-------------------------------------------------------------------------------
+
+TMS_UTILS_SRCS = [
+    '${BUILDPATH}/tms_utils_chr.c',
+    '${BUILDPATH}/tms_utils_fmt.c',
+    '${BUILDPATH}/tms_utils_hash.c',
+    '${BUILDPATH}/tms_utils_num.c',
+]
+
+#-------------------------------------------------------------------------------
+# Libraries
+#-------------------------------------------------------------------------------
+
+TMS_UTILS_IMGS = [
+
+   'CORE_APPS',                  # Domain(REX + TN)
+   'CORE_EOS',                   # Domain(REX + EOS)
+   'CORE_GSS',                   # Domain(REX + GSS)
+   'CORE_RPM',                   # Domain(REX + RPM)
+   'CORE_VPU',                   # Domain(NHLOS + VPU)
+   'CORE_WCN',                   # Domain(REX + WCN)
+
+   'CORE_ROOT',                  # Domain(Root)
+   'CORE_QDSP6_SW',              # Domain(Root + Audio)
+   'CORE_MODEM', 'MODEM_MODEM',  # Domain(Root + Modem)
+
+   'CORE_USER',                  # Domain(User)
+   'CORE_QDSP6_AUDIO_SW',        # Domain(User Audio)
+   'CORE_AUDIO_AVS_PD',          # Domain(User Audio)
+   'CORE_QDSP6_MODEM_SW',        # Domain(User Modem)
+   'CORE_QDSP6_SENSOR_SW',       # Domain(User Sensors)
+
+]
+
+env.AddLibrary(TMS_UTILS_IMGS, '${BUILDPATH}/tms_utils', TMS_UTILS_SRCS)
+
+#-------------------------------------------------------------------------------
+# Task Provisioning Information
+#-------------------------------------------------------------------------------
+
+# NONE
+
+#-------------------------------------------------------------------------------
+# Tracer Software Events
+#-------------------------------------------------------------------------------
+
+TMS_UTILS_SWE_EVENTS = [
+   ['TMS_UTILS_SWE_DESCRIPTI', 'Readable Text Descri %x %x', 'T'], # Comment on Use
+]
+
+if 'USES_QDSS_SWE' in env and len(TMS_UTILS_SWE_EVENTS) != 0:
+   env.Append(CPPDEFINES = ["TMS_UTILS_TRACER_SWEVT"])
+   env.Append(CPPPATH = ['${BUILD_ROOT}/core/debugtools/utils/build/${BUILDPATH}/'])
+   env.SWEBuilder(['${BUILD_ROOT}/core/debugtools/utils/build/${BUILDPATH}/tms_utils_tracer_swe.h'], None)
+   env.AddSWEInfo(TMS_UTILS_IMGS, TMS_UTILS_SWE_EVENTS)
+
+#-------------------------------------------------------------------------------
+# DALCFG Image "Static" Configuration Items
+#-------------------------------------------------------------------------------
+
+# NONE

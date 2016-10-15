@@ -1,0 +1,54 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+
+env = env.Clone()
+
+if not 'USES_PLATFORM_MINIMAL' in env:
+    platform_root = '${BUILD_ROOT}/platform'
+    env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+    #-------------------------------------------------------------------------------
+    # Include dirs
+    #-------------------------------------------------------------------------------
+
+    env.RequirePublicApi([
+      'HAPSDK',
+      'STDDEF',
+      ])
+
+    env.RequireRestrictedApi([
+      'TEST_PERF',
+      ])
+
+    #-------------------------------------------------------------------------------
+    # Source PATH
+    #-------------------------------------------------------------------------------
+    SRCPATH = "${ADSP_PLATFORM_ROOT}/test_perf/src"
+    env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+    TEST_PERF_SOURCES =  [
+       '${BUILDPATH}/test_perf.c',
+       env.AddQaicHeaderDep('${BUILDPATH}/test_perf.c', "test_perf_types"),
+       ]
+
+    #-------------------------------------------------------------------------------
+    # Add Libraries to image
+    #-------------------------------------------------------------------------------
+    test_perf_lib = env.AddBinaryLibrary(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+        'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'],'${BUILDPATH}/test_perf', TEST_PERF_SOURCES)
+
+    #-------------------------------------------------------------------------------
+    # Load Subunits (sys)
+    #-------------------------------------------------------------------------------
+    env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.S', '*.h'], '${ADSP_PLATFORM_ROOT}/test_perf/src'))
+CLEAN_LIST.extend(env.FindFiles(['*.h'], '${ADSP_PLATFORM_ROOT}/test_perf/inc'))
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)
+

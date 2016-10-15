@@ -1,0 +1,200 @@
+#===============================================================================
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2013 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#===============================================================================
+
+Import('env')
+
+# Build Tags
+#
+# CORE_GUESTOS, CORE_GUEST
+#
+# Requires Build Tags 'CORE_GUESTOS' & 'CORE_GUEST' to distinguish
+# between the GUESTOS PD and Other PD. The Build Tags are expected to
+# be associated as 'build_tags' within each IMAGE_ROOT SCONS file that
+# controls IMAGE specific information. 'CORE_GUESTOS' and
+# 'CORE_GUEST' may be applied to the same image.
+#
+# Dependency
+#
+# QURT, QURTOS, RCINIT, PD_DUMP_GUESTOS
+#
+# Requirements
+#
+# 1. The GUEST Program Domain Deliverable shall be partitioned to be a drop
+#    in build time component. Dependency is partitioned between GUESTOS
+#    and GUEST.
+# 2. The ONLY supported Dependency shall be via an RCINIT Framework
+#    init-function call provided for execution within GUESTOS.
+# 3. The RCINIT Framework init-function call shall be provided and
+#    managed by the GUEST Program Domain Deliverable owner.
+#
+# Policy
+#
+# 1. Policy shall be to start the GUESTOS Program Domain Deliverable no
+#    sooner than GUESTOS/RCINIT_GROUP_2, after all CORE dependency to
+#    GUEST has been met. Recommended is GUESTOS/RCINIT_GROUP_7.
+# 2. Policy shall be to Initialize the GUEST Program Domain required
+#    GUESTOS Drivers Support by RCINIT Framework Groups
+#    [ (GUESTOS|GUEST)/RCINIT_GROUP_0 .. (GUESTOS|GUEST)/RCINIT_GROUP_1 ]
+# 3. Policy shall be to Allow for Operation to GUEST Program Domain
+#    GUEST Drivers by RCINIT Framework Groups
+#    [ GUEST/RCINIT_GROUP_2 .. GUEST/RCINIT_GROUP_7 ]
+#
+# Examples
+#
+# GUESTOS SCONS, Provided by AUDIO, pd_audio.scons:
+#
+# if 'USES_RCINIT' in env:
+#  env.AddRCInitFunc(
+#   GUESTOS_IMG, # Executes in GUESTOS to SPAWN audio
+#   {
+#    'sequence_group'             : 'RCINIT_GROUP_7', # Policy Based
+#    'init_name'                  : 'pd_audio',
+#    'init_function'              : 'pd_mon_audio',
+#   })
+#
+# INIT-FUNCTION, Provided by AUDIO, pd_audio_start.c:
+#
+# #include "pd_mon_qurt.h"
+# void pd_mon_audio(void)
+# { PD_MON_HANDLE hPDAudio = pd_mon_spawn(PD_MON_RESTART_ALWAYS, "AUDIO"); }
+#
+# GUESTOS SCONS, Provided by SENSORS, pd_sensors.scons:
+#
+# if 'USES_RCINIT' in env:
+#  env.AddRCInitFunc(
+#   GUESTOS_IMG, # Executes in GUESTOS to SPAWN sensors
+#   {
+#    'sequence_group'             : 'RCINIT_GROUP_7', # Policy Based
+#    'init_name'                  : 'pd_sensors',
+#    'init_function'              : 'pd_mon_sensors',
+#   })
+#
+# INIT-FUNCTION, Provided by SENSORS, pd_sensors_start.c:
+#
+# #include "pd_mon_qurt.h"
+# void pd_mon_sensors(void)
+# { PD_MON_HANDLE hPDSensors = pd_mon_spawn(PD_MON_RESTART_ALWAYS, "SENSORS"); }
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+
+env.VariantDir('${BUILDPATH}', '${BUILD_ROOT}/core/debugtools/pd_mon/src', duplicate=0)
+
+#env.Append(CFLAGS = "-Werror ") # GCC Warnings are Fatal
+#env.Append(CFLAGS = "--diag_error=warning ") # ARMCC Warnings are Fatal
+#env.Append(CFLAGS = "--diag_suppress=9931 ") # Exception License Manager Failure
+
+#-------------------------------------------------------------------------------
+# External Dependency
+#-------------------------------------------------------------------------------
+
+#env.RequireExternalApi([
+#   'XYZ',
+#])
+
+#-------------------------------------------------------------------------------
+# Internal Dependency
+#-------------------------------------------------------------------------------
+
+CBSP_API = [
+   'DAL',
+   'TMS',
+   'DEBUGTOOLS',
+   'DEBUGTRACE',
+   'SERVICES',
+   'SYSTEMDRIVERS',
+   'KERNEL',   # needs to be last also contains wrong comdef.h
+]
+
+env.RequirePublicApi(CBSP_API)
+env.RequireRestrictedApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Sources
+#-------------------------------------------------------------------------------
+
+PD_MON_COMMON = [
+]
+
+PD_MON_GUEST = [
+   '${BUILDPATH}/pd_mon_guest.c',
+   '${BUILDPATH}/pd_mon_internal_guest.c',
+]
+
+PD_MON_GUESTOS = [
+   '${BUILDPATH}/pd_mon_guestos.c',
+   '${BUILDPATH}/pd_mon_internal_guestos.c',
+]
+
+#-------------------------------------------------------------------------------
+# Libraries
+#-------------------------------------------------------------------------------
+
+PD_MON_IMG = [
+   'CORE_GUEST',
+   'CORE_GUESTOS',
+]
+
+PD_MON_GUEST_IMG = [
+   'CORE_GUEST',
+]
+
+PD_MON_GUESTOS_IMG = [
+   'CORE_GUESTOS',
+]
+
+env.AddLibrary(PD_MON_IMG, '${BUILDPATH}/pd_mon', PD_MON_COMMON)
+
+env.AddLibrary(PD_MON_GUEST_IMG, '${BUILDPATH}/pd_mon_guest', PD_MON_GUEST)
+
+env.AddLibrary(PD_MON_GUESTOS_IMG, '${BUILDPATH}/pd_mon_guestos', PD_MON_GUESTOS)
+
+#-------------------------------------------------------------------------------
+# Task Provisioning Information
+#-------------------------------------------------------------------------------
+
+if 'USES_RCINIT' in env:
+ env.AddRCInitFunc(
+  PD_MON_GUEST_IMG,
+  {
+   'sequence_group'             : 'RCINIT_GROUP_0',
+   'init_name'                  : 'pd_mon_guest',
+   'init_function'              : 'pd_mon_guest_init',
+   'dependencies'               : [ 'pd_mon_guestos', ]
+  })
+
+if 'USES_RCINIT' in env:
+ env.AddRCInitFunc(
+  PD_MON_GUESTOS_IMG,
+  {
+   'sequence_group'             : 'RCINIT_GROUP_0',
+   'init_name'                  : 'pd_mon_guestos',
+   'init_function'              : 'pd_mon_guestos_init',
+   'dependencies'               : [ 'pd_dump_guestos', 'pd_dump_guest', ]
+  })
+
+#-------------------------------------------------------------------------------
+# Tracer Software Events
+#-------------------------------------------------------------------------------
+
+PD_MON_SWE_EVENTS = [
+   ['PD_MON_SWE_A',            'PD_MON A             %x %x', 'F'],
+]
+
+if 'USES_QDSS_SWE' in env and len(PD_MON_SWE_EVENTS) != 0:
+ env.AddSWEInfo(PD_MON_IMG, PD_MON_SWE_EVENTS)
+
+#-------------------------------------------------------------------------------
+# DALCFG Image "Static" Configuration Items
+#-------------------------------------------------------------------------------
+
+# NONE

@@ -1,0 +1,42 @@
+<!--
+  This XML file contains target specific information for MPM
+  driver for targets using device config feature.
+
+  Copyright (c) 2012 Qualcomm Technologies Incorporated.
+  All Rights Reserved.
+  Qualcomm Confidential and Proprietary   
+-->
+
+#include "DDIInterruptController.h"
+
+<!--
+ * Physical address of vmpm configuration registers of ADSP processors. This
+ * is defined by RPM and expected to remain fixed within chip family at least.
+-->
+#define RPM_MPM_ADSP_WAKEUP_TIME_PA 0xFC4295D0
+
+<driver name="NULL">
+  <device id="/dev/core/power/mpm">
+
+    <props name="mpmint_isr_mapping_table" type=DALPROP_ATTR_TYPE_STRUCT_PTR>
+      devcfgMpmIntMappingTable
+    </props>
+
+    <props name="mpmint_hal_cfg_table" type=DALPROP_ATTR_TYPE_STRUCT_PTR>
+      devcfgMpmIntHalTable
+    </props>
+
+    <props name="mpmint_proc_region_start_pa" type=DALPROP_ATTR_TYPE_UINT32>
+      RPM_MPM_ADSP_WAKEUP_TIME_PA
+    </props>
+
+    <props name="mpmint_rpm_wakeup_irq" type=DALPROP_ATTR_TYPE_UINT32>
+      5
+    </props>
+
+    <props name="mpmint_rpm_wakeup_irq_flags" type=DALPROP_ATTR_TYPE_UINT32>
+      DALINTRCTRL_ENABLE_RISING_EDGE_TRIGGER
+    </props>
+
+  </device>
+</driver>

@@ -1,0 +1,391 @@
+#===============================================================================
+#
+# CoreBSP ARM7 build script
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2009-2011 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header:$
+#  $DateTime: $
+#  $Author: $
+#  $Change: $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+# 07/15/11   sd      undefine CONFIG_USE_HMC5883, use CONFIG_USE_AKM8975
+# 07/14/11   ad      undefine CONFIG_USE_L3GD20 to remove STM L3GD20 as default gyro driver
+# 07/05/11   DC      Move SAM, SCM and gyro driver to TCM. Disabled memory optimization
+# 06/20/11   JH      Enable driver compilation flags
+# 06/16/11   DC      Enable optimization flags.
+# 06/09/11   DC      Used the rvct.py fropm tool VU instead of Core BSP VU
+# 05/31/11   DC      Removed USES_NO_STRIP_NO_ODM Flag
+# 05/19/11   DC      Updated to adhere to new tools VU
+# 05/19/11   sj      Increased number of DAL mutexes
+# 05/05/11   rk      Uncommented the ARMLD_REMOVE_CMD & feedback dsp linker option
+# 05/03/11   ag      Add section for linker customizations
+# 04/29/11   jh      Added definition of DSPS_RPM_SUPPORT for power logging
+# 04/20/11   jh      Added target dependent uCOS configuration parameters
+# 04/17/11   jh      Updated "plat" enviroment variable
+# 04/14/11   jh      Updated to handle multiple targets
+# 04/12/11   ag      Split the mbn file, not the elf
+# 04/08/11   ry      Added support for FLUID_BUILD feature flag generation
+# 03/24/11   ag      - update init calls to use newer params
+#                    - fix pil splitter dependency rules
+#                    - miscellaneous cleanup 
+# 03/17/11   jh      Added definition for SNS_TEST_BUILD (disabled)
+# 03/10/11   ag      Disable PIL splitter until Linux build issue is fixed
+# 03/10/11   ag      Don't use mbn to generate binaries until it is verified
+# 02/14/11   ag      Generate BuildProducts.txt
+# 02/08/11   ag      Enable mbn and binary file generation via scons; cleanup
+# 02/03/11   ag      Integrate SMD mainline VU
+# 01/23/11   of      Added MAG8975 unit test support
+#===============================================================================
+import os
+Import('env')
+
+env = env.Clone()
+
+#------------------------------------------------------------------------------
+# Check if we need to load this script or just bail-out
+#------------------------------------------------------------------------------
+# alias first alias is always the target then the other possibles
+aliases = [
+   'sensorsimg', 'sensorsimg_arm7',
+   'arm7', 'all'
+]
+
+# init environment variables
+env.InitImageVars(aliases, 
+      'arm7',  
+      plat='dal', 
+      config='sps', 
+      target='SENSORSIMG_${BUILD_ID}',
+      build_tags=['CORE','CORE_SPS'],
+      deprecated_build_tags=['CBSP_QDSP6_SW_IMAGE'])
+
+if not env.CheckAlias():
+   Return()
+
+#------------------------------------------------------------------------------
+# Handles target specific code and features
+#------------------------------------------------------------------------------
+if env['MSM_ID'] in ['8660']:
+   env.Append(CPPDEFINES = ["FEATURE_MSM8660"])   
+   env.Append(CPPDEFINES = ["UCOSII_MAX_EVENTS=16",
+                            "UCOSII_DSPS_MAIN_PRIO=9",
+                            "UCOSII_MAX_DAL_RESERVED_PRIO=8"])
+elif env['MSM_ID'] in ['8960']:
+   env.Append(CPPDEFINES = ["FEATURE_MSM8960"])
+   env.Append(CPPDEFINES = ["DSPS_RPM_SUPPORT"])
+   env.Append(CPPDEFINES = ["UCOSII_MAX_EVENTS=32",
+                            "UCOSII_DSPS_MAIN_PRIO=28",
+                            "UCOSII_MAX_DAL_RESERVED_PRIO=27"])
+   env.Append(CPPDEFINES = ["CONFIG_USE_AKM8975"])
+  #env.Append(CPPDEFINES = ["CONFIG_USE_HMC5883"])
+  #env.Append(CPPDEFINES = ["CONFIG_USE_L3GD20"])
+  #env.Append(CPPDEFINES = ["CONFIG_USE_L3G4200D"])
+   env.Append(CPPDEFINES = ["CONFIG_USE_ISL29028"])
+   env.Append(CPPDEFINES = ["CONFIG_USE_LIS3DH"])
+
+#------------------------------------------------------------------------------
+# Init default values for this PROC/Image
+#------------------------------------------------------------------------------
+# replace AMSS CUST file, add ours to #undef unwanted features if needed
+#env.Replace(AMSS_CUST_H = env.subst('CUST${BUILD_ID}.H').lower())
+##env.Replace(AMSS_CUST_H = env.subst('CUSTSPS.H').lower())
+# add define for original AMSS custfile
+#env.Append(CPPDEFINES = [
+#   "AMSS_CUST_H=\\\"${AMSS_CUST_H}\\\"",
+#])
+
+env.Replace(SNS_DSPS_H = 'sns_dsps.h')
+env.Replace(CUST_H = 'custsensorsimg.h')
+
+# add define for original AMSS custfile
+env.Append(CPPDEFINES = [
+   "SNS_DSPS_H=\\\"${SNS_DSPS_H}\\\"",
+   "FEATURE_COREIMG",
+])
+
+env.Append(CPPDEFINES = ["__arm"])
+env.Replace(DALSYS_UCOS_SHIM = True)
+env.Replace(CORE_SPS_UCOS = True)
+#env.Replace(DAL_UCOS_TEST = True)
+#env.Replace(ACCEL_SDD_TEST = True)
+#env.Replace(DD_UNIT_TEST = True)
+#env.Replace(SNS_TEST_BUILD = True)
+env.Replace(SNS_DSPS_BUILD = True)
+
+# replace Fluid and FFA flags depending on required build. FFA_BUILD flag should be used by default.
+#env.Replace(FLUID_BUILD = True)
+env.Replace(FFA_BUILD = True)
+
+if env.has_key('SNS_DSPS_BUILD'):
+  env.Append(CPPDEFINES = ["SNS_DSPS_BUILD"])
+
+if env.has_key('DALSYS_UCOS_SHIM'):
+  env.Append(CPPDEFINES = ["DALSYS_UCOS_SHIM"])
+
+if env.has_key('CORE_SPS_UCOS'):
+  env.Append(CPPDEFINES = ["CORE_SPS_UCOS"])
+
+if env.has_key('DAL_UCOS_TEST'):
+  env.Append(CPPDEFINES = ["DAL_UCOS_TEST"])
+
+#if env.has_key('SNS_TEST_BUILD'):
+#  env.Append(CPPDEFINES = ["SNS_SAM_UNIT_TEST"])
+
+# Uncomment only when making an engineering build for heap analysis and debugging(OI memmgr profile).
+# env.Append(CPPDEFINES = ["OI_DEBUG"])
+
+if (env.has_key('DD_UNIT_TEST')) and (env.has_key('FLUID_BUILD')):
+   env.Append(CPPDEFINES = ["MAG8975_UNIT_TEST"])   
+
+if env.has_key('FLUID_BUILD'):
+   env.Append(CPPDEFINES = ["CONFIG_USE_AKM8975"])   
+   env.Append(CPPDEFINES = ["FLUID_BUILD"])
+
+#---------------------------------------------------------------------------
+# Load in CBSP uses and path variables
+#---------------------------------------------------------------------------
+env.InitBuildConfig()
+
+# add QCOREIMG include path
+env.PublishPrivateApi('SENSORSIMG', ["${BUILD_ROOT}/core/bsp/sensorsimg/inc"])
+
+#---------------------------------------------------------------------------
+# Load in the tools scripts
+#---------------------------------------------------------------------------
+env.LoadToolScript('rvct', toolpath = ["${BUILD_ROOT}/tools/build/scons/scripts"])
+env.LoadToolScript('dsps_defs', toolpath = ["${BUILD_ROOT}/core/bsp/build/scripts"])
+env.LoadToolScript('dsps_builder', toolpath = ['${BUILD_ROOT}/core/bsp/build/scripts'])
+
+#---------------------------------------------------------------------------
+# Customize Linker Options for DSPS
+#---------------------------------------------------------------------------
+#
+# To remove unused sections use ARMLD_REMOVE_CMD. By default unused sections
+# are not removed. Note that we do remove all debug sections(major portion
+# of the reduction) post elf generation. So the reduction in size can be
+# misleading. The real reduction is caused by the unused sections being 
+# removed. Look for information in the unused section in the map file. Before
+# enabling this option make	sure the resulting elf file is useful for debug 
+# using JTAG.
+#
+
+#env.Append(LINKFLAGS = " $ARMLD_REMOVE_CMD $ARMLD_INFO_CMD unused ")
+
+#
+# To prevent linker from searching for default ARM libraries use no_scanlib
+# All dependencies for floating point library will be caught by this. Not that 
+# this will list other needed libraries as well.
+#
+
+#env.Append(LINKFLAGS = " --no_scanlib ")
+
+#
+# To try different optimization levels you can play with the optimization
+# options:
+#   ARM_OPT_TIME  - optimize for time (default)
+#   ARM_OPT_SPACE - optimize for space
+#   ARM_OPT_1     - optimization level 1 (don't try too hard)
+#   ARM_OPT_2     - optimization level 2 (try harder) (default)
+#   -O3           - optimization level 3 (optimize the heck out)
+#
+
+env.Replace(ARMCC_OPT = " ${ARM_OPT_SPACE} -O3 ")
+
+#
+# Unused functions can be removed when the compiler and linker work
+# together. The linker can generate a feedback file for the compiler
+# to use. The first run will always be without any feedback. Subsequent
+# compilations can benefit from previous linker information. Use the 
+# following two updates together.
+#
+
+env.Append(LINKFLAGS = " $ARMLD_INFO_CMD unused ")
+env.Append(ARMCC_OPT = " --feedback dsps_linker_feedback.txt ")
+env.Append(LINKFLAGS = " --feedback dsps_linker_feedback.txt ")
+
+#---------------------------------------------------------------------------
+# Libs/Objs
+#---------------------------------------------------------------------------
+sensorsimg_libs = []
+sensorsimg_objs = []
+
+#---------------------------------------------------------------------------
+# Libraries Section
+#---------------------------------------------------------------------------
+
+# load Core BSP libs/objs build rules.
+core_libs, core_objs = env.LoadAUSoftwareUnits('core')
+sensorsimg_libs.extend(core_libs)
+sensorsimg_objs.extend(core_objs)
+
+#------------------------------------------------------------------------------
+# Load in CBSP common build rules
+#------------------------------------------------------------------------------
+env.Replace(QCOREIMG_LIBS = sensorsimg_libs)
+env.Replace(QCOREIMG_OBJS = sensorsimg_objs)
+
+#env.Tool('CoreImage', toolpath = ['${BUILD_ROOT}/core/bsp/coreimg/build/${PROC}'])
+if True:
+  #-------------------------------------------------------------------------
+   # Libs/Objs
+   #-------------------------------------------------------------------------
+   qcoreimg_libs_path = env.get('INSTALL_LIBPATH')
+   qcoreimg_libs = env.get('QCOREIMG_LIBS')
+   qcoreimg_objs = env.get('QCOREIMG_OBJS')      
+
+   qcoreimg_units = [qcoreimg_libs, qcoreimg_objs]
+   
+   # filter is not define or filter is current target files only, ok to build misc files
+   filter_opt = env.get('FILTER_OPT')
+   if (filter_opt is None) or (env.FilterMatch(os.getcwd())):
+      #=========================================================================
+      # CBSP Image section
+      #=========================================================================
+   
+      # make our clone so we won't mess the lib rules, it shoun't because they 
+      # should of clone, but just to be on the safe side.
+      env = env.Clone()
+      
+      #-------------------------------------------------------------------------
+      # Source PATH
+      #-------------------------------------------------------------------------
+      QCOREIMG_SRC = "${COREBSP_ROOT}/bsp/coreimg/src"
+
+      env.VariantDir("${BUILDPATH}", QCOREIMG_SRC, duplicate=0)
+
+      #-------------------------------------------------------------------------
+      # External depends within CoreBSP
+      #-------------------------------------------------------------------------
+
+      #-------------------------------------------------------------------------
+      # Internal depends within CoreBSP
+      #-------------------------------------------------------------------------
+      CBSP_API = [
+         'SERVICES',
+         'SENSORS',
+      ]
+
+      env.RequirePublicApi(CBSP_API)
+
+      #=========================================================================
+      # Beging building QCOREIMG
+      #
+
+      #-------------------------------------------------------------------------
+      # quartz config XML files
+      #-------------------------------------------------------------------------
+      AMSS_RELOC_LC = "build_${TARGET_BLD_KCFG}/amss/bin/${BUILD_ID}.reloc"
+      AMSS_RELOC = "${L4_ROOT}/" + AMSS_RELOC_LC
+      TCXO_SHUTDOWN_RELOC_LC="0"
+      
+      #----------------------------------------------------------------------------
+      # Build env scatter load
+      #----------------------------------------------------------------------------
+      target_scl = env.SclBuilder('${TARGET_NAME}', [
+         '${BUILD_ROOT}/Sensors/dsps/src/${MSM_ID}/dsps.scl'
+      ])
+      
+      qcoreimg_units += target_scl
+      
+      #----------------------------------------------------------------------------
+      # Sources, libraries
+      #----------------------------------------------------------------------------
+
+      # stubs and other qcore app files
+      QCOREIMG_SOURCES = [
+         #'${BUILDPATH}/cp_stub.c',
+         #'${BUILDPATH}/diag_stubs.c', 
+         #'${BUILDPATH}/other_stubs.c', 
+         #'${BUILDPATH}/securemsm_stubs.c',
+      ]
+      
+      qcoreimg_objs.extend(env.Object(QCOREIMG_SOURCES))
+      
+   # the following steps can only be performed if there is no filters in effect
+   if filter_opt is None:
+      #-------------------------------------------------------------------------
+      # Build env QCOREIMG
+      #-------------------------------------------------------------------------
+      qcoreimg_elf = env.Program("${TARGET_NAME}", qcoreimg_objs, LIBS=qcoreimg_libs)
+      env.Depends(qcoreimg_elf, target_scl)
+      
+      qcoreimg_map = env.subst('${TARGET_NAME}.map')
+      qcoreimg_sym = env.subst('${TARGET_NAME}.sym')
+      
+      env.Clean(qcoreimg_elf, qcoreimg_map)
+      env.Clean(qcoreimg_elf, qcoreimg_sym)
+      
+      #-------------------------------------------------------------------------
+      # Modify elf flags to update attributes for shared segments, 
+      # DL segments, etc.
+      #-------------------------------------------------------------------------
+      target_elf = qcoreimg_elf
+      
+      #-------------------------------------------------------------------------
+      # Install ELF, reloc files
+      #-------------------------------------------------------------------------
+
+      # copy elf and reloc to needed locations for AMSS tools to load on target
+      install_target_elf = env.InstallAs('${BUILD_MS_ROOT}/dsps.elf', target_elf)
+
+      install_target_reloc = env.InstallAs(AMSS_RELOC, install_target_elf)      
+
+      #-------------------------------------------------------------------------
+      # ELF cleanup
+      #-------------------------------------------------------------------------
+      target_clean_elf = env.DspsCleanBuilder('${TARGET_NAME}', qcoreimg_elf)
+      target_mod_elf = env.DspsModBuilder('${TARGET_NAME}', target_clean_elf)
+
+      #-------------------------------------------------------------------------
+      # Build env mbn files
+      #-------------------------------------------------------------------------
+      env.Replace(USES_MBNTOOLS = True)
+      env.Replace(GLOBAL_DICT = {1:1})
+
+      target_mbn = env.MbnBuilder('${TARGET_NAME}', target_mod_elf, MBN_TYPE="elf",IMAGE_TYPE="dsps",
+         FLASH_TYPE=env['TARGET_FLASH_TYPE'])
+
+      #-------------------------------------------------------------------------
+      # Build files for PIL driver
+      #-------------------------------------------------------------------------
+      env.LoadToolScript('pil_splitter_builder', toolpath = ['${BUILD_ROOT}/core/bsp/build/scripts'])
+      target_pil = env.PilSplitterBuilder('${BUILD_ROOT}/build/ms/bin/PIL_IMAGES/SPLITBINS_${QC_SHORT_BUILDPATH}/dsps.mdt', target_mbn)
+      qcoreimg_units += target_pil
+
+      #-------------------------------------------------------------------------
+      # Generate BuildProducts.txt
+      #-------------------------------------------------------------------------
+      target_prod_list = env.DspsProductListBuilder([
+        '${BUILD_ROOT}/../BuildProducts.txt'], 
+        target_mbn)
+
+      #=========================================================================
+      # Define targets needed QCOREIMG
+      #
+      qcoreimg_units = env.Alias ('arm11_qcoreimg_units', [
+         install_target_elf,
+         target_mbn,
+         target_pil,
+         target_prod_list,
+      ])
+
+   #print env.Dump()
+
+   # add aliases
+   aliases = env.get('IMAGE_ALIASES')
+   for alias in aliases:
+      env.Alias(alias, qcoreimg_units)

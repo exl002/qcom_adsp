@@ -1,0 +1,25 @@
+#ifndef ADSP_PROCESS_GROUP_IDL
+#define ADSP_PROCESS_GROUP_IDL
+
+#include "AEEStdDef.idl"
+
+const long _const_adsp_process_group_handle = 1;
+struct mmap_page {
+   uint32 phy_addr;
+   uint32 page_size;
+};
+
+module adsp {
+   interface process_group {
+      long create(in long pgid);
+      long destroy(in long pgid);
+      long mmap(in long pgid, 
+                in uint32 flags, 
+                in uint32 vaddrin, 
+                in sequence<mmap_page> pages, 
+                rout unsigned long vaddrout);
+      long munmap(in long pgid, in uint32 vaddrin, in long len);
+   };
+};
+
+#endif // ADSP_PROCESS_GROUP_IDL

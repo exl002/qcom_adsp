@@ -1,0 +1,39 @@
+B-family: Build Commands:
+------------------------
+Go to 'adsp_proc\build' and then run the build command:
+
+1. cd adsp_proc
+2. cd build
+3. To compile:
+    BUILD COMMAND:   
+        python build.py -c <CHIPSET> -b <build_id> -p <pid>  
+4. To clean:
+    CLEAN COMMAND:   
+        python build.py -c <CHIPSET> -b <build_id> -p <pid> -o clean
+
+Example:
+For 8974:  python build.py -c msm8974 -p mpd -o all
+For 8x26:  python build.py -c msm8x26 -p mpd -o all
+For 8x10:  python build.py -c msm8x10 -p mpd -o all
+For 9x25:  python build.py -c mdm9x25 -p spd -o all
+ 
+The above commands are common across windows and linux environments.
+Build commands using build.cmd and build_adsp_image.sh are obsolete. Please use above commands which uses build.py
+
+
+Note:
+    a. For HAP packages:
+        BUILD COMMAND: python build.py
+        CLEAN COMMAND: python build.py -o clean
+        
+       There is no need to specify parameters to 'build.py' for HAP packages like HY11_1, HD11_1 etc (except as specified above), it takes default parameters from 'adsp_proc\hap\default_pack.txt'. 
+       Use -b, -c, -p, -o options of 'build.py' only when you wish to override the default parameters from 'adsp_proc\hap\default_pack.txt' 
+       (User specified parameters are a priority for 'build.py'.)
+    
+    b. For more information on build system, please refer to build system presentation document (80-NF768-20)
+
+    c. Cygwin dependency on build system is removed for the ADSP builds. Now, for ADSP builds compilation, there is no requirement to install Cygwin anymore.
+       
+
+    
+    

@@ -1,0 +1,106 @@
+#===============================================================================
+#
+# Build Script : RCEVT
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#===============================================================================
+
+Import('env')
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+
+env.VariantDir('${BUILDPATH}', '${BUILD_ROOT}/core/debugtools/rcevt/src', duplicate=0)
+
+#-------------------------------------------------------------------------------
+# Internal Dependency Information
+#-------------------------------------------------------------------------------
+
+CBSP_API = [
+   'DAL',
+   'TMS',
+   'DEBUGTOOLS',
+   'SERVICES',
+   'SYSTEMDRIVERS', # REQ FOR KERNEL? KERNEL SHOULD PROVIDE DEPENDENCY
+   'KERNEL',
+]
+
+env.RequirePublicApi(CBSP_API)
+
+#-------------------------------------------------------------------------------
+# Sources, libraries
+#-------------------------------------------------------------------------------
+
+RCEVT_COMMON = [
+   '${BUILDPATH}/rcecb.c',
+   '${BUILDPATH}/rcevt.c',
+   '${BUILDPATH}/rcevt_common.c',
+   '${BUILDPATH}/rcevt_internal.c',
+]
+
+RCEVT_DAL = [
+    '${BUILDPATH}/rcevt_dal.c',
+]
+
+RCEVT_DAL_VOID = [
+   '${BUILDPATH}/rcevt_dal_void.c',
+]
+
+RCEVT_POSIX = [
+    '${BUILDPATH}/rcevt_posix.c',
+]
+
+RCEVT_POSIX_VOID = [
+   '${BUILDPATH}/rcevt_posix_void.c',
+]
+
+RCEVT_QURT = [
+    '${BUILDPATH}/rcevt_qurt.c',
+]
+
+RCEVT_QURT_VOID = [
+   '${BUILDPATH}/rcevt_qurt_void.c',
+]
+
+RCEVT_REX = [
+    '${BUILDPATH}/rcevt_rex.c',
+]
+
+RCEVT_REX_VOID = [
+   '${BUILDPATH}/rcevt_rex_void.c',
+]
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+
+RCEVT_IMG = [ 'CORE_APPS', 'CORE_GSS', 'CORE_MODEM', 'CORE_VPU', 'CORE_WCN', 'MODEM_MODEM', 'CORE_QDSP6_SW','CORE_QDSP6_SENSOR_SW','CORE_QDSP6_AUDIO_SW' ]
+
+env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt', RCEVT_COMMON)
+
+if 'USES_DAL' in env:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_dal', RCEVT_DAL)
+else:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_dal_void', RCEVT_DAL_VOID)
+
+if 'USES_POSIX' in env:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_posix', RCEVT_POSIX)
+else:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_posix_void', RCEVT_POSIX_VOID)
+
+if 'USES_QURT' in env:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_qurt', RCEVT_QURT)
+else:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_qurt_void', RCEVT_QURT_VOID)
+
+if 'USES_REX' in env:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_rex', RCEVT_REX)
+else:
+ env.AddLibrary(RCEVT_IMG, '${BUILDPATH}/rcevt_rex_void', RCEVT_REX_VOID)

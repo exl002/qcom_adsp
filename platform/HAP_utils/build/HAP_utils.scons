@@ -1,0 +1,60 @@
+#===============================================================================
+# Copyright (c) 2012 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#===============================================================================
+Import('env')
+
+env = env.Clone()
+
+platform_root = '${BUILD_ROOT}/platform'
+env.Replace(ADSP_PLATFORM_ROOT = platform_root)
+
+#-------------------------------------------------------------------------------
+# Include dirs
+#-------------------------------------------------------------------------------
+
+env.RequirePublicApi([
+  'HAPSDK',
+  'STDDEF',
+  'PLATFORM_LIBS',
+  ])
+
+core_public_apis = [
+   'DEBUGTOOLS',
+   'SERVICES',
+   'KERNEL',
+   ]
+
+env.RequirePublicApi(core_public_apis, area='core')
+
+#-------------------------------------------------------------------------------
+# Source PATH
+#-------------------------------------------------------------------------------
+SRCPATH = "${ADSP_PLATFORM_ROOT}/HAP_utils/src"
+env.VariantDir('${BUILDPATH}', SRCPATH, duplicate=0)
+
+if 'USES_PLATFORM_MINIMAL' not in env:
+  # Register as static library
+  env.PLRegister("HAP_utils")
+
+HAP_UTILS_SOURCES =  [
+   '${BUILDPATH}/HAP_utils.cpp',
+   ]
+
+#-------------------------------------------------------------------------------
+# Add Libraries to image
+#-------------------------------------------------------------------------------
+HAP_utils_lib = env.AddBinaryLibrary(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE',
+  'QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'],'${BUILDPATH}/HAP_utils', HAP_UTILS_SOURCES)
+
+#-------------------------------------------------------------------------------
+# Load Subunits (sys)
+#-------------------------------------------------------------------------------
+env.LoadSoftwareUnits()
+
+#Clean and pack rules
+CLEAN_LIST=[]
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.h'], '${ADSP_PLATFORM_ROOT}/HAP_utils/src'))
+CLEAN_LIST.extend(env.FindFiles(['*.c', '*.cpp', '*.h'], '${ADSP_PLATFORM_ROOT}/HAP_utils/data'))
+env.CleanPack(['SINGLE_IMAGE', 'CBSP_SINGLE_IMAGE', 'MODEM_IMAGE', 'CBSP_MODEM_IMAGE','QDSP6_SW_IMAGE', 'CBSP_QDSP6_SW_IMAGE'], CLEAN_LIST)

@@ -1,0 +1,47 @@
+#===============================================================================
+#
+# MPROC INC PATHs
+#
+# GENERAL DESCRIPTION
+#    build script
+#
+# Copyright (c) 2012 by QUALCOMM, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/core.adsp/2.2/mproc/build/paths.sconscript#2 $
+#  $DateTime: 2013/07/24 01:40:41 $
+#  $Author: coresvc $
+#  $Change: 4152440 $
+#                      EDIT HISTORY FOR FILE
+#                      
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#  
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+
+#-------------------------------------------------------------------------------
+# Publish Public APIs
+# These are accessible internal or external to CoreBSP
+#-------------------------------------------------------------------------------
+env.PublishPublicApi('MPROC', [
+   "${INC_ROOT}/core/api/mproc",
+])
+
+#-------------------------------------------------------------------------------
+# Publish Restricted APIs
+# These are accessible only within CoreBSP
+#-------------------------------------------------------------------------------
+env.PublishRestrictedApi('MPROC', [
+   "${INC_ROOT}/core/mproc/ipc_router/inc",
+   "${INC_ROOT}/core/mproc/smem/inc",
+   "${INC_ROOT}/core/mproc/smd/inc",
+   "${INC_ROOT}/core/mproc/smsm/inc",
+])
+

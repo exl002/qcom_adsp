@@ -1,0 +1,47 @@
+#===============================================================================
+#
+# qdsp6 AU
+#
+# GENERAL DESCRIPTION
+#    Build script
+#
+# Copyright (c) 2009-2009 by Qualcomm Technologies, Incorporated.
+# All Rights Reserved.
+# QUALCOMM Proprietary/GTDR
+#
+#-------------------------------------------------------------------------------
+#
+#  $Header: //components/rel/dspcore.adsp/2.2/build/qdsp6.scons#2 $
+#  $DateTime: 2013/06/06 19:10:35 $
+#  $Author: coresvc $
+#  $Change: 3881540 $
+#                      EDIT HISTORY FOR FILE
+#
+#  This section contains comments describing changes made to the module.
+#  Notice that changes are listed in reverse chronological order.
+#
+# when       who     what, where, why
+# --------   ---     ---------------------------------------------------------
+#
+#===============================================================================
+Import('env')
+env = env.Clone()
+
+
+# temporarily add these path, need AVS to publish the public APIs
+env.Append(CPPPATH = [
+   "${BUILD_ROOT}/avs/elite/qurt_elite/inc",
+   "${BUILD_ROOT}/avs/api/mmutils",
+   "${BUILD_ROOT}/avs/api/avcs/inc",
+   "${BUILD_ROOT}/avs/elite/utils/inc",
+   "${BUILD_ROOT}/avs/api/apr",
+   "${BUILD_ROOT}",
+  ])
+
+qdsp6_public_apis = [
+   'QDSP6'
+   ]
+env.RequirePublicApi(qdsp6_public_apis, area='qdsp6')
+
+
+env.LoadSoftwareUnits()
